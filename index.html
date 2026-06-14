@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grid Theory — Pixel NFT Canvas</title>
+  <meta name="description" content="A collection of 12,000 shaded pixel NFTs. Mint pixels, arrange them on a shared canvas, and create your own mosaic art." />
+  <meta property="og:title" content="12,000 Shades — Pixel NFT Canvas" />
+  <meta property="og:description" content="Mint shaded pixel NFTs and compose them into custom canvas artwork." />
+  <meta property="og:type" content="website" />
+
+  <!-- Fontshare: General Sans (display/body) + JetBrains Mono for metadata -->
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a0a'/%3E%3Crect x='5' y='5' width='10' height='10' fill='%2300a7b5'/%3E%3Crect x='17' y='5' width='10' height='10' fill='%23ff2d6f'/%3E%3Crect x='5' y='17' width='10' height='10' fill='%23ffc247'/%3E%3Crect x='17' y='17' width='10' height='10' fill='%23200f36'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="styles.css?v=4" />
+</head>
+<body>
+  <!-- Thin framed border -->
+  <div class="frame" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="site-name" href="#home" data-nav aria-label="Grid Theory">Grid Theory</a>
+
+    <nav class="nav" aria-label="Primary">
+      <a href="#home" class="nav-link is-active" data-nav>Home</a>
+      <a href="#canvas" class="nav-link" data-nav>Canvas</a>
+      <a href="#grid" class="nav-link" data-nav>Grid</a>
+      <a href="#builder" class="nav-link" data-nav>Builder</a>
+      <a href="#lab" class="nav-link nav-link-locked" data-nav data-locked-nav>Lab</a>
+      <a href="#store" class="nav-link nav-link-locked" data-nav data-locked-nav>Store</a>
+      <a href="#gallery" class="nav-link" data-nav>Gallery</a>
+    </nav>
+
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section id="home" class="hero">
+      <div class="hero-inner">
+        <h1 class="hero-title">
+          12,000 shaded pixels.
+          <br/>One canvas for your art.
+        </h1>
+
+        <div class="hero-meta">
+          <p>THE COLLECTION CONTAINS 12,000 PIXEL NFTS.</p>
+          <p>EACH TOKEN CARRIES A DIFFERENT SHADE, TONE, AND POSITIONAL VALUE.</p>
+          <p class="meta-gap">MINT THE PIXELS. OPEN THE CANVAS. COMPOSE YOUR OWN ARTWORK.</p>
+          <p>FROM SOFT GRADIENT PANELS TO FULL CUSTOM MOSAICS.</p>
+        </div>
+
+        <div class="hero-links">
+          <a href="#builder" class="text-link" data-nav>Build with pixels.</a>
+          <a href="#gallery" class="text-link" data-nav>View sample shades.</a>
+        </div>
+      </div>
+
+      <div class="pixel-art-preview" aria-label="Pixel mosaic artwork preview">
+        <img class="pixel-board-image" src="wall.jpg" alt="Pixel mosaic artwork made from shaded NFT blocks" />
+      </div>
+
+    </section>
+
+    <!-- CANVAS -->
+    <section id="canvas" class="panel">
+      <div class="panel-head">
+        <span class="section-index">01 / CANVAS</span>
+        <h2 class="panel-title">Use minted pixels as your material.</h2>
+      </div>
+
+      <div class="canvas-stage">
+        <canvas id="field" aria-label="Static shaded pixel canvas preview"></canvas>
+      </div>
+
+      <p class="panel-note">
+        Mint individual shades, then use the canvas to compose a larger image.
+        The final artwork can look like the gradient panel above or anything
+        the collector designs.
+      </p>
+    </section>
+
+    <!-- GRID -->
+    <section id="grid" class="panel">
+      <div class="panel-head">
+        <span class="section-index">02 / GRID</span>
+        <h2 class="panel-title">Choose the canvas density.</h2>
+      </div>
+
+      <div class="grid-size-list" aria-label="Canvas grid size examples">
+        <button class="grid-size-card" type="button" data-grid-size="2" aria-pressed="false">
+          <div class="grid-sample" aria-hidden="true"></div>
+          <span>2 × 2</span>
+        </button>
+        <button class="grid-size-card" type="button" data-grid-size="3" aria-pressed="false">
+          <div class="grid-sample" aria-hidden="true"></div>
+          <span>3 × 3</span>
+        </button>
+        <button class="grid-size-card" type="button" data-grid-size="4" aria-pressed="false">
+          <div class="grid-sample" aria-hidden="true"></div>
+          <span>4 × 4</span>
+        </button>
+        <button class="grid-size-card is-active" type="button" data-grid-size="6" aria-pressed="true">
+          <div class="grid-sample" aria-hidden="true"></div>
+          <span>6 × 6</span>
+        </button>
+      </div>
+
+      <p class="panel-note">
+        Smaller grids create bold icon-like compositions. Larger grids allow more detail,
+        smoother gradients, and richer collector-made artwork.
+      </p>
+    </section>
+
+    <!-- BUILDER -->
+    <section id="builder" class="panel builder-panel">
+      <div class="panel-head builder-head">
+        <div>
+          <span class="section-index">03 / BUILDER</span>
+          <h2 class="panel-title">Try the canvas with demo shades.</h2>
+        </div>
+      </div>
+
+      <div class="builder-shell">
+        <aside class="nft-drawer" aria-label="NFT collection palette">
+          <div class="drawer-head">
+            <span>Demo Colours</span>
+            <strong class="nft-count" id="demo-count">12 colour options</strong>
+            <small id="demo-status">Choose any shade, click squares, or drag colours into the grid.</small>
+          </div>
+          <div class="nft-palette" id="demo-palette"></div>
+        </aside>
+
+        <div class="builder-workspace">
+          <div class="builder-toolbar" aria-label="Builder controls">
+            <div class="builder-grid-controls" aria-label="Choose builder grid size">
+              <button type="button" data-demo-size="2" class="is-active">2 × 2</button>
+              <button type="button" data-demo-size="3">3 × 3</button>
+              <button type="button" data-demo-size="4">4 × 4</button>
+              <button type="button" data-demo-size="6">6 × 6</button>
+            </div>
+            <button class="download-button" type="button" id="download-demo-art">Download</button>
+          </div>
+
+          <div class="builder-board-wrap">
+            <div class="builder-board" id="demo-board" aria-label="Use demo colours here to build pixel art"></div>
+          </div>
+        </div>
+      </div>
+
+      <p class="panel-note">
+        This builder stays open as a quick demo. Use the Lab below when you want
+        to connect a wallet and build from actual collection NFTs.
+      </p>
+    </section>
+
+    <!-- GALLERY -->
+    <section id="gallery" class="panel">
+      <div class="panel-head">
+        <span class="section-index">04 / GALLERY</span>
+        <h2 class="panel-title">Every shade can become part of a larger image.</h2>
+      </div>
+
+      <div class="gallery-grid" id="gallery-grid"><!-- tiles injected by script --></div>
+
+      <p class="panel-note">
+        Each tile represents a possible pixel image assembled from owned shades.
+        Click any sample to generate a new composition.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="foot-tag">12,000 PIXELS · MINT · CREATE</span>
+  </footer>
+
+  <!-- corner social controls -->
+  <div class="social" aria-label="Social links">
+    <a href="https://opensea.io/" aria-label="OpenSea" title="OpenSea" target="_blank" rel="noreferrer">
+      <span>OpenSea</span>
+    </a>
+    <a href="https://x.com/" aria-label="X" title="X" target="_blank" rel="noreferrer">
+      <span>X</span>
+    </a>
+  </div>
+
+  <script src="script.js?v=4"></script>
+<script data-pplx-inline-edit>
+(function () {
+  if (window === window.top) return;
+
+  const allowedParentOrigins = ["https://www.perplexity.ai","https://perplexity.ai","https://testing.perplexity.ai","https://staging.perplexity.ai","https://*.preview.i.perplexity.ai","http://localhost:3000","http://127.0.0.1:3000","http://localhost:5173","http://127.0.0.1:5173"];
+  const MAX_FONT_BYTES = 500 * 1024;
+  const MAX_TOTAL_FONT_BYTES = 2 * 1024 * 1024;
+  let scrollForwarding = false;
+  let scrollRaf = 0;
+  let trustedTopOrigin = null;
+
+  // Allow entries like "https://*.preview.i.perplexity.ai" — the wildcard
+  // matches a single DNS label (no dots), so "https://*.foo" cannot stretch
+  // across multiple labels.
+  function matchesAllowedOrigin(origin) {
+    if (!origin) return false;
+    for (const entry of allowedParentOrigins) {
+      if (!entry.includes("*")) {
+        if (entry === origin) return true;
+        continue;
+      }
+      const pattern = new RegExp(
+        "^" +
+          entry.replace(/[.+?^${}()|[\]\\]/g, "\\$&").replace(/\*/g, "[^.]+") +
+          "$",
+      );
+      if (pattern.test(origin)) return true;
+    }
+    return false;
+  }
+
+  // Trust decision: when the sender is same-origin-visible (event.origin is a
+  // real origin like https://www.perplexity.ai) we trust event.origin directly.
+  // When event.origin is "null" (opaque broker srcdoc), we fall back to the
+  // broker's stamped `parentOrigin` to identify the top window. The fallback
+  // is claim-only — we rely on the browser's native `targetOrigin` enforcement
+  // on the response path (see postToTrustedTop) to ensure replies can't be
+  // delivered to anyone but the actual top window of that claimed origin.
+  function getTrustedParentOrigin(event) {
+    const forwardedParentOrigin =
+      typeof event.data.parentOrigin === "string" ? event.data.parentOrigin : null;
+    const parentOrigin = event.origin === "null" ? forwardedParentOrigin : event.origin;
+    return matchesAllowedOrigin(parentOrigin) ? parentOrigin : null;
+  }
+
+  // All responses go to window.top with targetOrigin = the allowlisted origin.
+  // An attacker that iframes us inside their own null-origin broker can claim
+  // any parentOrigin they like, but the browser will drop the reply whenever
+  // the real top's origin doesn't match — so the screenshot never leaves.
+  function postToTrustedTop(message) {
+    if (!trustedTopOrigin) return;
+    try {
+      window.top.postMessage(message, trustedTopOrigin);
+    } catch (_error) {}
+  }
+
+  function inlineAll(original, clone) {
+    if (original.nodeType !== 1 || clone.nodeType !== 1) return;
+
+    try {
+      const computedStyle = getComputedStyle(original);
+      // cssText on a computed style is the serialized declaration in modern
+      // Chromium/Safari — a single read beats enumerating ~400 longhand
+      // properties. Firefox returns "" here, so we fall back on empty.
+      const serialized = computedStyle.cssText;
+      if (serialized) {
+        clone.style.cssText = serialized;
+      } else {
+        const parts = new Array(computedStyle.length);
+        for (let index = 0; index < computedStyle.length; index += 1) {
+          const property = computedStyle[index];
+          parts[index] = `${property}:${computedStyle.getPropertyValue(property)};`;
+        }
+        clone.style.cssText = parts.join("");
+      }
+    } catch (_error) {}
+
+    const originalChildren = original.children;
+    const clonedChildren = clone.children;
+    for (
+      let index = 0;
+      index < originalChildren.length && index < clonedChildren.length;
+      index += 1
+    ) {
+      inlineAll(originalChildren[index], clonedChildren[index]);
+    }
+  }
+
+  function extractFontUrl(srcValue) {
+    const matches = [
+      ...srcValue.matchAll(
+        /url\(["']?([^"')]+)["']?\)(?:\s*format\(["']?([^"')]+)["']?\))?/gi,
+      ),
+    ];
+    if (matches.length === 0) return null;
+    const woff2 = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff2"));
+    if (woff2) return woff2[1];
+    const woff = matches.find((m) => m[2] && m[2].toLowerCase().includes("woff"));
+    if (woff) return woff[1];
+    return matches[0][1];
+  }
+
+  // Cache resolved font URL -> data URI across captures. Fonts on a page
+  // essentially never change, and a batch run emits multiple captures back to
+  // back — without this we'd refetch + re-base64 every time.
+  const fontDataUriCache = new Map();
+  const SRC_DECLARATION_RE = /src\s*:\s*[^;}]+/i;
+
+  async function fetchAsDataUri(url) {
+    if (fontDataUriCache.has(url)) return fontDataUriCache.get(url);
+    let dataUri = null;
+    try {
+      const response = await fetch(url, { mode: "cors", credentials: "omit" });
+      if (response.ok) {
+        const blob = await response.blob();
+        if (blob.size <= MAX_FONT_BYTES) {
+          dataUri = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () =>
+              resolve(typeof reader.result === "string" ? reader.result : null);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(blob);
+          });
+        }
+      }
+    } catch (_error) {
+      dataUri = null;
+    }
+    fontDataUriCache.set(url, dataUri);
+    return dataUri;
+  }
+
+  function collectFontFaceRuleTexts() {
+    const rules = [];
+    for (const sheet of document.styleSheets) {
+      let cssRules;
+      try {
+        cssRules = sheet.cssRules;
+      } catch (_error) {
+        continue;
+      }
+      if (!cssRules) continue;
+      for (const rule of cssRules) {
+        const cssText = rule.cssText || "";
+        if (cssText.startsWith("@font-face")) rules.push(cssText);
+      }
+    }
+    return rules;
+  }
+
+  async function buildInlinedFontCss() {
+    const ruleTexts = collectFontFaceRuleTexts();
+    if (ruleTexts.length === 0) return null;
+
+    const resolved = ruleTexts.map((cssText) => {
+      if (!SRC_DECLARATION_RE.test(cssText)) return null;
+      const srcMatch = cssText.match(/src\s*:\s*([^;}]+)[;}]/i);
+      if (!srcMatch) return null;
+      const url = extractFontUrl(srcMatch[1]);
+      if (!url) return null;
+      try {
+        return { cssText, url: new URL(url, document.baseURI).href };
+      } catch (_error) {
+        return null;
+      }
+    });
+
+    const dataUris = await Promise.all(
+      resolved.map((entry) => (entry ? fetchAsDataUri(entry.url) : Promise.resolve(null))),
+    );
+
+    const inlined = [];
+    let totalBytes = 0;
+    for (let index = 0; index < resolved.length; index += 1) {
+      const entry = resolved[index];
+      const dataUri = dataUris[index];
+      if (!entry || !dataUri) continue;
+      const approxBytes = dataUri.length * 0.75;
+      if (totalBytes + approxBytes > MAX_TOTAL_FONT_BYTES) break;
+      totalBytes += approxBytes;
+      inlined.push(entry.cssText.replace(SRC_DECLARATION_RE, `src: url("${dataUri}")`));
+    }
+    return inlined.length > 0 ? inlined.join("\n") : null;
+  }
+
+  function stripExternal(clone) {
+    const images = clone.querySelectorAll("img");
+    for (let index = 0; index < images.length; index += 1) {
+      const src = images[index].getAttribute("src");
+      if (src && !src.startsWith("data:")) images[index].removeAttribute("src");
+    }
+
+    const elements = clone.querySelectorAll("*");
+    for (let index = 0; index < elements.length; index += 1) {
+      const style = elements[index].style.cssText;
+      if (style && style.includes("url(")) {
+        elements[index].style.cssText = style.replace(
+          /url\(["']?(?!data:)[^)"']*["']?\)/gi,
+          "none",
+        );
+      }
+    }
+  }
+
+  function emitScroll() {
+    scrollRaf = 0;
+    if (!scrollForwarding) return;
+    postToTrustedTop({
+      type: "INLINE_EDIT_SCROLL",
+      scrollX: window.scrollX,
+      scrollY: window.scrollY,
+    });
+  }
+
+  window.addEventListener(
+    "scroll",
+    function () {
+      if (!scrollForwarding || scrollRaf) return;
+      scrollRaf = requestAnimationFrame(emitScroll);
+    },
+    { passive: true, capture: true },
+  );
+
+  async function handleCaptureRequest(event) {
+    const requestId = event.data.requestId;
+    const scrollX = window.scrollX;
+    const scrollY = window.scrollY;
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    function postResult(dataUrl) {
+      postToTrustedTop({
+        type: "INLINE_EDIT_SCREENSHOT_RESULT",
+        requestId,
+        dataUrl,
+        scrollX,
+        scrollY,
+      });
+    }
+
+    try {
+      // Wait for any pending web fonts to resolve so both inline metrics and
+      // the @font-face inlining below see the same loaded faces.
+      if (document.fonts && document.fonts.ready) {
+        try {
+          await document.fonts.ready;
+        } catch (_error) {}
+      }
+
+      const clone = document.documentElement.cloneNode(true);
+      inlineAll(document.documentElement, clone);
+
+      const removedNodes = clone.querySelectorAll("script,link[rel=\"stylesheet\"],style");
+      for (let index = 0; index < removedNodes.length; index += 1) {
+        removedNodes[index].remove();
+      }
+
+      stripExternal(clone);
+
+      // Re-embed web fonts as data-URI @font-face rules so the SVG rasterizer
+      // can resolve them — external font URLs aren't fetched during
+      // foreignObject rendering, which would otherwise force a fallback face
+      // and change text metrics.
+      const inlinedFontCss = await buildInlinedFontCss();
+      if (inlinedFontCss) {
+        const styleEl = document.createElement("style");
+        styleEl.textContent = inlinedFontCss;
+        const head = clone.querySelector("head");
+        if (head) head.appendChild(styleEl);
+        else clone.insertBefore(styleEl, clone.firstChild);
+      }
+
+      const html = new XMLSerializer().serializeToString(clone);
+      const svg =
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">` +
+        '<foreignObject width="100%" height="100%">' +
+        `<div xmlns="http://www.w3.org/1999/xhtml" style="width:${width}px;height:${height}px;overflow:hidden">` +
+        `<div style="position:relative;left:-${scrollX}px;top:-${scrollY}px">` +
+        html +
+        "</div></div></foreignObject></svg>";
+      const svgUrl = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+      const image = new Image();
+      image.onload = function () {
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(image, 0, 0);
+        postResult(canvas.toDataURL("image/png"));
+      };
+      image.onerror = function () {
+        postResult(null);
+      };
+      image.src = svgUrl;
+    } catch (_error) {
+      postResult(null);
+    }
+  }
+
+  window.addEventListener("message", function (event) {
+    if (!event.data) return;
+    // Only accept messages from the direct parent frame. Blocks sibling /
+    // unrelated-window postMessage senders that could otherwise reach us.
+    if (event.source !== window.parent) return;
+
+    const trustedParentOrigin = getTrustedParentOrigin(event);
+    if (!trustedParentOrigin) return;
+    trustedTopOrigin = trustedParentOrigin;
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_START") {
+      scrollForwarding = true;
+      emitScroll();
+      return;
+    }
+
+    if (event.data.type === "INLINE_EDIT_SCROLL_STOP") {
+      scrollForwarding = false;
+      if (scrollRaf) cancelAnimationFrame(scrollRaf);
+      scrollRaf = 0;
+      return;
+    }
+
+    if (event.data.type !== "INLINE_EDIT_CAPTURE_REQUEST") return;
+
+    handleCaptureRequest(event);
+  });
+})();
+
+
+</script></body>
+</html>
