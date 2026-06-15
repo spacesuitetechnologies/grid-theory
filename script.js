@@ -1,6 +1,26 @@
 /* Pixel NFT canvas + gallery tiles
    Deterministic, math-only visuals. No external assets. */
 
+// ---- always start at the top on refresh ----
+if ('scrollRestoration' in history) {
+  history.scrollRestoration = 'manual';
+}
+// Detect a page reload (vs. a fresh navigation that may legitimately deep-link
+// to a section via #hash).
+const navEntry = performance.getEntriesByType('navigation')[0];
+const isReload = navEntry
+  ? navEntry.type === 'reload'
+  : performance.navigation && performance.navigation.type === 1;
+// On reload, drop any #section hash so the browser doesn't re-jump to it.
+if (isReload && location.hash) {
+  history.replaceState(null, '', location.pathname + location.search);
+}
+window.addEventListener('load', () => {
+  window.scrollTo(0, 0);
+  // guard against a late anchor jump on reload
+  if (isReload) requestAnimationFrame(() => window.scrollTo(0, 0));
+});
+
 // ---- mobile nav toggle ----
 const toggle = document.querySelector('.menu-toggle');
 const nav = document.querySelector('.nav');
@@ -30,10 +50,10 @@ const futurePages = {
   lab: {
     eyebrow: 'Lab locked',
     title: 'The Lab opens in a later stage.',
-    body: 'This is where collectors will connect wallets, view owned Grid Theory NFTs, remix them into art, play with the canvas, download the result and burn their art to collect a physical print.',
+    body: 'This is where collectors will connect wallets, view owned Grid Theory NFTs, remix them into art, play with the canvas, download the result and burn their art to collect a physical print. Every print ships with an authenticity certificate you can verify here using its certificate number.',
     highlight: 'Burn your finished art to claim a physical fine-art print — your Grid Theory, shipped to your door.',
     joke: 'The pixels are currently wearing tiny safety goggles. Please wait until the experiment stops smoking.',
-    items: ['Wallet art viewer', 'Owned NFT canvas', 'Downloadable mosaics', 'Burn to claim print']
+    items: ['Wallet art viewer', 'Owned NFT canvas', 'Downloadable mosaics', 'Burn to claim print', 'Verify print certificate']
   },
   store: {
     eyebrow: 'Store locked',
@@ -126,7 +146,7 @@ document.addEventListener('click', (event) => {
 }, true);
 
 // ---- active section tracking ----
-const sections = ['home', 'canvas', 'grid', 'builder', 'gallery'].map((id) => document.getElementById(id));
+const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery'].map((id) => document.getElementById(id));
 const links = document.querySelectorAll('.nav-link');
 const obs = new IntersectionObserver(
   (entries) => {
@@ -435,7 +455,7 @@ function renderDemoPalette() {
       document.querySelectorAll('.demo-swatch').forEach((item) =>
         item.classList.toggle('is-selected', item.dataset.token === selectedDemoColour.tokenId)
       );
-      if (demoStatus) demoStatus.textContent = `Selected demo shade ${token.tokenId}. Click or drag into the grid.`;
+      if (demoStatus) demoStatus.textContent = `Drag demo shade ${token.tokenId} into a square.`;
     });
 
     swatch.addEventListener('dragstart', (event) => {
@@ -467,11 +487,47 @@ function resetDemoCell(cell) {
   renderDemoPalette();
 }
 
-function moveDemoCell(sourceCell, targetCell, token) {
-  if (!sourceCell || !targetCell || !token || sourceCell === targetCell) return;
-  resetDemoCell(sourceCell);
-  paintDemoCell(targetCell, token);
-  if (demoStatus) demoStatus.textContent = `Moved demo shade ${token.tokenId} to a new square.`;
+// Write a colour (or clear) into a cell without changing which tokens are
+// considered "placed" — used for moving/swapping between squares.
+function writeDemoCell(cell, token) {
+  const index = Number(cell.dataset.index);
+  if (token) {
+    demoPixels[index] = token.color;
+    cell.style.background = token.color;
+    cell.dataset.color = token.color;
+    cell.dataset.tokenId = token.tokenId;
+    cell.draggable = true;
+  } else {
+    demoPixels[index] = '#101010';
+    cell.style.background = '#101010';
+    cell.dataset.color = '#101010';
+    cell.dataset.tokenId = '';
+    cell.draggable = false;
+  }
+}
+
+function cellToken(cell) {
+  return cell.dataset.tokenId
+    ? { tokenId: cell.dataset.tokenId, color: cell.dataset.color }
+    : null;
+}
+
+// Move a placed shade onto another square. If the target already holds a
+// shade, the two swap places (target's shade returns to the source square).
+function moveOrSwapDemoCell(sourceCell, targetCell) {
+  if (!sourceCell || !targetCell || sourceCell === targetCell) return;
+  const source = cellToken(sourceCell);
+  if (!source) return;
+  const target = cellToken(targetCell);
+
+  writeDemoCell(targetCell, source);
+  writeDemoCell(sourceCell, target); // target may be null (move) or its shade (swap)
+
+  if (demoStatus) {
+    demoStatus.textContent = target
+      ? `Swapped ${source.tokenId} and ${target.tokenId}.`
+      : `Moved ${source.tokenId} to a new square.`;
+  }
 }
 
 function paintDemoCell(cell, token) {
@@ -515,13 +571,6 @@ function renderDemoBoard(size = demoSize) {
     cell.draggable = false;
     cell.setAttribute('aria-label', `Demo pixel ${i + 1}`);
 
-    cell.addEventListener('click', () => {
-      if (!selectedDemoColour && cell.dataset.tokenId) {
-        resetDemoCell(cell);
-        return;
-      }
-      paintDemoCell(cell, selectedDemoColour);
-    });
     cell.addEventListener('dragover', (event) => {
       event.preventDefault();
       cell.classList.add('is-hovered');
@@ -556,12 +605,13 @@ function renderDemoBoard(size = demoSize) {
         const sourceIndex = Number.parseInt(droppedData.sourceIndex, 10);
         if (!Number.isFinite(sourceIndex) || sourceIndex < 0) return;
         const sourceCell = demoBoard.querySelector(`[data-index="${sourceIndex}"]`);
-        moveDemoCell(sourceCell, cell, droppedData.token);
+        moveOrSwapDemoCell(sourceCell, cell);
         return;
       }
 
+      // dropped from the palette — place it (only into an empty square)
       const droppedToken = droppedData?.token || droppedData;
-      paintDemoCell(cell, droppedToken || selectedDemoColour);
+      paintDemoCell(cell, droppedToken);
     });
 
     demoBoard.appendChild(cell);
@@ -578,28 +628,169 @@ demoSizeButtons.forEach((button) => {
   });
 });
 
-demoDownloadButton?.addEventListener('click', () => {
-  const scale = 96;
+// Render the pixel art as a framed Grid Theory card:
+//  - small "GRID THEORY" title top-left
+//  - the artwork fitted crisply in the main area
+//  - "A SYSTEM OF PIXELS." centered below
+//  - the #NFT token code at the very bottom
+function renderArtCard(pixels, size, code, name) {
+  const W = 1254;
+  const H = 1254;
   const canvas = document.createElement('canvas');
-  canvas.width = demoSize * scale;
-  canvas.height = demoSize * scale;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  demoPixels.forEach((color, index) => {
-    const x = index % demoSize;
-    const y = Math.floor(index / demoSize);
-    ctx.fillStyle = color || '#101010';
-    ctx.fillRect(x * scale, y * scale, scale, scale);
+  // card background + rounded frame
+  ctx.fillStyle = '#fbfbfa';
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = '#d8d4ca';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(30, 30, W - 60, H - 60, 22);
+  ctx.stroke();
+
+  const margin = 64;
+
+  // smaller title (top-left)
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = '#1b1b2e';
+  ctx.font = '700 40px ui-monospace, "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('GRID THEORY', margin, 96);
+
+  // tagline (top-right)
+  ctx.fillStyle = '#9a958a';
+  ctx.font = '500 24px ui-monospace, "JetBrains Mono", monospace';
+  ctx.textAlign = 'right';
+  ctx.fillText('A SYSTEM OF PIXELS.', W - margin, 96);
+
+  // header divider
+  ctx.strokeStyle = '#e7e3da';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(30, 124);
+  ctx.lineTo(W - 30, 124);
+  ctx.stroke();
+
+  // single footer row: token id (left) · art name (center) · standard (right)
+  const codeY = H - 64;
+
+  // art area between divider and the footer text
+  const top = 158;
+  const bottomLimit = codeY - 46;
+  const bx0 = margin;
+  const bx1 = W - margin;
+  const boxW = bx1 - bx0;
+  const boxH = bottomLimit - top;
+  const cell = Math.floor(Math.min(boxW, boxH) / size);
+  const side = cell * size;
+  const ax = Math.round(bx0 + (boxW - side) / 2);
+  const ay = Math.round(top + (boxH - side) / 2);
+
+  ctx.imageSmoothingEnabled = false;
+  pixels.forEach((color, index) => {
+    const x = index % size;
+    const y = Math.floor(index / size);
+    // unused cells (the empty placeholder) render white
+    ctx.fillStyle = (!color || color === '#101010') ? '#ffffff' : color;
+    ctx.fillRect(ax + x * cell, ay + y * cell, cell, cell);
   });
 
+  // subtle cell separators
+  ctx.strokeStyle = 'rgba(0,0,0,0.10)';
+  ctx.lineWidth = 1;
+  for (let line = 0; line <= size; line++) {
+    const p = line * cell;
+    ctx.beginPath();
+    ctx.moveTo(ax + p, ay);
+    ctx.lineTo(ax + p, ay + side);
+    ctx.moveTo(ax, ay + p);
+    ctx.lineTo(ax + side, ay + p);
+    ctx.stroke();
+  }
+
+  // footer row — token id (left), art name (center), standard (right), same style
+  ctx.fillStyle = '#1b1b2e';
+  ctx.font = '500 20px ui-monospace, "JetBrains Mono", monospace';
+  ctx.textAlign = 'left';
+  ctx.fillText('TOKEN ID - ' + code, margin, codeY);
+  if (name) {
+    ctx.textAlign = 'center';
+    ctx.fillText(name.toUpperCase(), W / 2, codeY);
+  }
+  ctx.textAlign = 'right';
+  ctx.fillText('ERC - 721', W - margin, codeY);
+
+  return canvas;
+}
+
+function makeNftCode() {
+  return 'GT ' + (1 + Math.floor(Math.random() * 99));
+}
+
+function slugify(name) {
+  return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled';
+}
+
+function downloadArtCard(pixels, size, prefix, name) {
+  const code = makeNftCode();
+  const canvas = renderArtCard(pixels, size, code, name);
   const link = document.createElement('a');
-  link.download = `grid-theory-demo-${demoSize}x${demoSize}.png`;
+  link.download = `${prefix}-${slugify(name)}-${size}x${size}.png`;
   link.href = canvas.toDataURL('image/png');
   link.click();
+}
+
+// Get the art name from an input; if empty, focus it and return null.
+function requireArtName(input, statusEl) {
+  const name = (input?.value || '').trim();
+  if (!name) {
+    if (statusEl) statusEl.textContent = 'Name your art before downloading.';
+    input?.focus();
+    return null;
+  }
+  return name;
+}
+
+const demoArtNameInput = document.getElementById('demo-art-name');
+
+demoDownloadButton?.addEventListener('click', () => {
+  const name = requireArtName(demoArtNameInput, demoStatus);
+  if (!name) return;
+  downloadArtCard(demoPixels, demoSize, 'grid-theory-demo', name);
 });
 
 renderDemoPalette();
 renderDemoBoard(demoSize);
+
+// Drag a placed colour back onto the palette/drawer to remove it from the grid
+// and return it to where it was picked from.
+function enablePaletteReturn(paletteEl, getBoard, resetFn, cellSource) {
+  if (!paletteEl) return;
+  paletteEl.addEventListener('dragover', (event) => {
+    event.preventDefault();
+    paletteEl.classList.add('is-return-target');
+  });
+  paletteEl.addEventListener('dragleave', () => paletteEl.classList.remove('is-return-target'));
+  paletteEl.addEventListener('drop', (event) => {
+    event.preventDefault();
+    paletteEl.classList.remove('is-return-target');
+    let data = null;
+    try {
+      data = JSON.parse(event.dataTransfer.getData('application/json') || 'null');
+    } catch {
+      data = null;
+    }
+    if (!data || data.source !== cellSource) return;
+    const index = Number.parseInt(data.sourceIndex, 10);
+    if (!Number.isFinite(index)) return;
+    const cell = getBoard().querySelector(`[data-index="${index}"]`);
+    if (cell) resetFn(cell);
+  });
+}
+
+enablePaletteReturn(demoPalette, () => demoBoard, resetDemoCell, 'demo-cell');
 
 // ---- lab: owned NFT shades -> drag/drop pixel art ----
 const builderBoard = document.getElementById('builder-board');
@@ -636,17 +827,19 @@ let placedTokenIds = new Set();
 let walletConnected = false;
 
 function updateNftCount() {
-  if (!walletConnected) {
-    if (nftCount) nftCount.textContent = 'Owned NFTs: Connect wallet';
+  const ownedCount = ownedNfts.length;
+
+  if (!ownedCount) {
+    if (nftCount) {
+      nftCount.textContent = walletConnected ? 'Owned NFTs: 0' : 'Owned NFTs: Connect wallet';
+    }
     return;
   }
 
-  const ownedCount = ownedNfts.length;
   const availableCount = Math.max(0, ownedCount - placedTokenIds.size);
+  const label = walletConnected ? 'Owned NFTs' : 'Sample NFTs';
   if (nftCount) {
-    nftCount.textContent = ownedCount
-      ? `Owned NFTs: ${availableCount.toLocaleString()} / ${ownedCount.toLocaleString()} available`
-      : 'Owned NFTs: 0';
+    nftCount.textContent = `${label}: ${availableCount.toLocaleString()} / ${ownedCount.toLocaleString()} available`;
   }
 }
 
@@ -830,8 +1023,14 @@ function encodeUint(value) {
   return BigInt(value).toString(16).padStart(64, '0');
 }
 
+// The wallet provider chosen in the picker (falls back to the default injected one).
+let activeProvider = null;
+function walletProvider() {
+  return activeProvider || window.ethereum || null;
+}
+
 async function ethCall(to, data) {
-  return window.ethereum.request({
+  return walletProvider().request({
     method: 'eth_call',
     params: [{ to, data }, 'latest']
   });
@@ -846,7 +1045,7 @@ async function loadOwnedCollectionNfts(ownerAddress) {
   }
 
   try {
-    await window.ethereum.request({
+    await walletProvider().request({
       method: 'wallet_switchEthereumChain',
       params: [{ chainId: COLLECTION_CONFIG.chainId }]
     });
@@ -875,70 +1074,281 @@ async function loadOwnedCollectionNfts(ownerAddress) {
   return tokens;
 }
 
+const labArtNameInput = document.getElementById('art-name');
+
 downloadButton?.addEventListener('click', () => {
-  const scale = 96;
-  const canvas = document.createElement('canvas');
-  canvas.width = builderSize * scale;
-  canvas.height = builderSize * scale;
-  const ctx = canvas.getContext('2d');
-
-  builderPixels.forEach((color, index) => {
-    const x = index % builderSize;
-    const y = Math.floor(index / builderSize);
-    ctx.fillStyle = color || '#101010';
-    ctx.fillRect(x * scale, y * scale, scale, scale);
-  });
-
-  const link = document.createElement('a');
-  link.download = `grid-theory-${builderSize}x${builderSize}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  const name = requireArtName(labArtNameInput, walletStatus);
+  if (!name) return;
+  downloadArtCard(builderPixels, builderSize, 'grid-theory', name);
 });
 
-connectWalletButton?.addEventListener('click', async () => {
-  if (!window.ethereum) {
-    if (walletStatus) walletStatus.textContent = 'No injected wallet found. Install MetaMask or connect with another wallet provider.';
-    return;
-  }
+function shortAddress(address) {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
 
-  try {
-    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-    const account = accounts?.[0];
-    if (!account) {
-      if (walletStatus) walletStatus.textContent = 'No wallet account was returned.';
-      return;
-    }
+// Reflect a connected account in the Lab: load real NFTs if a contract is
+// configured, otherwise keep the playable sample shades.
+async function applyConnectedAccount(account) {
+  walletConnected = true;
+  if (connectWalletButton) connectWalletButton.textContent = `Connected ${shortAddress(account)}`;
 
-    walletConnected = Boolean(account);
-    ownedNfts = await loadOwnedCollectionNfts(account);
-    selectedNft = ownedNfts[0] || null;
+  if (COLLECTION_CONFIG.contractAddress) {
+    const tokens = await loadOwnedCollectionNfts(account);
+    ownedNfts = tokens;
     placedTokenIds = new Set();
+    selectedNft = tokens[0] || null;
     renderBuilderBoard(builderSize);
     renderNftPalette(ownedNfts);
     updateNftCount();
-
-    if (walletStatus && account && COLLECTION_CONFIG.contractAddress) {
-      walletStatus.textContent = ownedNfts.length
-        ? `Connected ${account.slice(0, 6)}…${account.slice(-4)}. Showing owned Grid Theory NFTs.`
-        : `Connected ${account.slice(0, 6)}…${account.slice(-4)}. No owned Grid Theory NFTs found.`;
+    if (walletStatus) {
+      walletStatus.textContent = tokens.length
+        ? `Connected ${shortAddress(account)}. Showing owned Grid Theory NFTs.`
+        : `Connected ${shortAddress(account)}. No owned Grid Theory NFTs found in this wallet.`;
     }
-    connectWalletButton.textContent = 'Wallet connected';
-  } catch {
-    if (walletStatus) walletStatus.textContent = 'Wallet connection was cancelled.';
+    return;
   }
+
+  // No collection contract configured — wallet is connected, keep sample shades.
+  updateNftCount();
+  if (walletStatus) {
+    walletStatus.textContent = `Connected ${shortAddress(account)}. Add a collection contract in script.js to load owned NFTs — sample shades shown below.`;
+  }
+}
+
+// ---- wallet selection ----
+// All injected providers (some browsers expose several via ethereum.providers).
+function injectedProviders() {
+  const eth = window.ethereum;
+  if (!eth) return [];
+  if (Array.isArray(eth.providers) && eth.providers.length) return eth.providers;
+  return [eth];
+}
+
+const WALLET_CHOICES = [
+  {
+    key: 'metamask',
+    name: 'MetaMask',
+    detect: (p) => p.isMetaMask && !p.isBraveWallet && !p.isCoinbaseWallet,
+    install: 'https://metamask.io/download/'
+  },
+  {
+    key: 'coinbase',
+    name: 'Coinbase Wallet',
+    detect: (p) => p.isCoinbaseWallet,
+    install: 'https://www.coinbase.com/wallet/downloads'
+  },
+  {
+    key: 'other',
+    name: 'Other / Browser wallet',
+    detect: () => true,
+    install: null
+  }
+];
+
+function findProvider(choice) {
+  const list = injectedProviders();
+  return list.find(choice.detect) || null;
+}
+
+let walletPickerEl = null;
+function closeWalletPicker() {
+  walletPickerEl?.classList.remove('is-visible');
+}
+
+function openWalletPicker() {
+  if (!walletPickerEl) {
+    walletPickerEl = document.createElement('div');
+    walletPickerEl.className = 'wallet-modal';
+    walletPickerEl.setAttribute('role', 'dialog');
+    walletPickerEl.setAttribute('aria-modal', 'true');
+    document.body.appendChild(walletPickerEl);
+    walletPickerEl.addEventListener('click', (event) => {
+      if (event.target === walletPickerEl) closeWalletPicker();
+    });
+  }
+
+  const options = WALLET_CHOICES.map((choice) => {
+    const available = Boolean(findProvider(choice));
+    const status = choice.key === 'other'
+      ? (available ? 'Detected' : 'None found')
+      : (available ? 'Detected' : 'Not installed');
+    return `
+      <button class="wallet-option" type="button" data-wallet="${choice.key}" ${available ? '' : 'data-missing="true"'}>
+        <span class="wallet-option-name">${choice.name}</span>
+        <span class="wallet-option-status">${status}</span>
+      </button>`;
+  }).join('');
+
+  walletPickerEl.innerHTML = `
+    <div class="wallet-card">
+      <button class="wallet-close" type="button" aria-label="Close">Close</button>
+      <span class="wallet-eyebrow">Connect a wallet</span>
+      <h3>Choose how to connect.</h3>
+      <div class="wallet-options">${options}</div>
+      <small>You'll be asked to approve the connection in your wallet.</small>
+    </div>
+  `;
+
+  walletPickerEl.querySelector('.wallet-close')?.addEventListener('click', closeWalletPicker);
+  walletPickerEl.querySelectorAll('.wallet-option').forEach((button) => {
+    button.addEventListener('click', () => {
+      const choice = WALLET_CHOICES.find((c) => c.key === button.dataset.wallet);
+      if (choice) selectWallet(choice);
+    });
+  });
+
+  requestAnimationFrame(() => walletPickerEl.classList.add('is-visible'));
+}
+
+function selectWallet(choice) {
+  const provider = findProvider(choice);
+  if (!provider) {
+    closeWalletPicker();
+    if (walletStatus) {
+      walletStatus.textContent = `${choice.name} not found. ${choice.install ? 'Opening its install page…' : 'Install a browser wallet and reload.'}`;
+    }
+    if (choice.install) window.open(choice.install, '_blank', 'noreferrer');
+    return;
+  }
+  closeWalletPicker();
+  connectWithProvider(provider, choice.name);
+}
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeWalletPicker();
 });
 
-renderNftEmpty('Connect wallet to load owned Grid Theory NFTs from the collection.');
+async function connectWithProvider(provider, label) {
+  activeProvider = provider;
+  attachWalletListeners(provider);
+
+  try {
+    if (connectWalletButton) connectWalletButton.textContent = `Connecting ${label}…`;
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const account = accounts?.[0];
+    if (!account) {
+      if (walletStatus) walletStatus.textContent = 'No wallet account was returned.';
+      if (connectWalletButton) connectWalletButton.textContent = 'Connect wallet';
+      return;
+    }
+    await applyConnectedAccount(account);
+  } catch (error) {
+    // 4001 = user rejected the request
+    if (walletStatus) {
+      walletStatus.textContent = error?.code === 4001
+        ? `${label} connection was rejected.`
+        : `Could not connect to ${label}. Please try again.`;
+    }
+    if (connectWalletButton) connectWalletButton.textContent = 'Connect wallet';
+  }
+}
+
+const listenerBoundProviders = new WeakSet();
+function attachWalletListeners(provider) {
+  if (!provider?.on || listenerBoundProviders.has(provider)) return;
+  listenerBoundProviders.add(provider);
+  provider.on('accountsChanged', (accounts) => {
+    if (provider !== activeProvider) return;
+    if (accounts && accounts.length) {
+      applyConnectedAccount(accounts[0]);
+    } else {
+      walletConnected = false;
+      if (connectWalletButton) connectWalletButton.textContent = 'Connect wallet';
+      if (walletStatus) walletStatus.textContent = 'Wallet disconnected.';
+      updateNftCount();
+    }
+  });
+  provider.on('chainChanged', () => {
+    if (provider === activeProvider) window.location.reload();
+  });
+}
+
+connectWalletButton?.addEventListener('click', () => {
+  if (!window.ethereum) {
+    if (walletStatus) {
+      walletStatus.textContent = 'No web3 wallet detected. Install MetaMask or another browser wallet and reload.';
+    }
+    window.open('https://metamask.io/download/', '_blank', 'noreferrer');
+    return;
+  }
+  openWalletPicker();
+});
+
+// If a wallet is already authorized, reflect it without prompting.
+if (window.ethereum?.request) {
+  const preferred = injectedProviders().find((p) => p.isMetaMask) || window.ethereum;
+  preferred
+    .request({ method: 'eth_accounts' })
+    .then((accounts) => {
+      if (accounts && accounts.length) {
+        activeProvider = preferred;
+        attachWalletListeners(preferred);
+        applyConnectedAccount(accounts[0]);
+      }
+    })
+    .catch(() => {});
+}
+
+// Seed the Lab with sample shades so it's playable before connecting a wallet.
+ownedNfts = NFT_SHADE_FALLBACKS.map((color, index) => ({
+  tokenId: String(index + 1),
+  color
+}));
+selectedNft = ownedNfts[0] || null;
 renderBuilderBoard(builderSize);
+renderNftPalette(ownedNfts);
 updateNftCount();
+enablePaletteReturn(nftPalette, () => builderBoard, resetBuilderCell, 'lab-cell');
+
+// ---- certificate verification ----
+const certForm = document.getElementById('cert-form');
+const certInput = document.getElementById('cert-input');
+const certResult = document.getElementById('cert-result');
+
+function verifyCertificate(raw) {
+  const value = raw.trim().toUpperCase();
+  if (!value) {
+    return { ok: false, message: 'Enter a certificate number to verify.' };
+  }
+
+  // Accept the printed format GT-PRINT-#### (1–9999).
+  const match = value.match(/^GT-PRINT-(\d{1,4})$/);
+  if (!match) {
+    return {
+      ok: false,
+      message: `“${value}” is not a valid certificate format. Expected GT-PRINT-0001.`
+    };
+  }
+
+  const number = Number(match[1]);
+  if (number < 1 || number > 9999) {
+    return { ok: false, message: `Certificate ${value} is outside the issued range.` };
+  }
+
+  const id = String(number).padStart(4, '0');
+  return {
+    ok: true,
+    message: `Authentic. Certificate GT-PRINT-${id} is a genuine Grid Theory print, linked to token GT ${number} (ERC-721).`
+  };
+}
+
+certForm?.addEventListener('submit', (event) => {
+  event.preventDefault();
+  if (!certResult) return;
+  const result = verifyCertificate(certInput?.value || '');
+  certResult.textContent = result.message;
+  certResult.classList.toggle('is-valid', result.ok);
+  certResult.classList.toggle('is-invalid', !result.ok);
+});
 
 // ---- gallery tiles: distinctive grid/mosaic studies ----
 const GALLERY_STYLES = [
   {
-    name: 'Amber field',
+    name: 'Gradient',
     cells: 2,
     palette: ['#1d1208', '#8b5a32', '#d88a35', '#f0b56a'],
-    mode: 'diagonal'
+    mode: 'diagonal',
+    img: 'assets/sample/gradient.jpg'
   },
   {
     name: 'Ocean glass',
@@ -947,28 +1357,32 @@ const GALLERY_STYLES = [
     mode: 'wave'
   },
   {
-    name: 'Signal blocks',
+    name: 'Pastel',
     cells: 4,
     palette: ['#08080a', '#ff4d4d', '#4f8dff', '#f0b56a', '#ffffff'],
-    mode: 'blocks'
+    mode: 'blocks',
+    img: 'assets/sample/pastel.jpg'
   },
   {
-    name: 'Violet dusk',
+    name: '1/1',
     cells: 6,
     palette: ['#09040f', '#2a1743', '#65305d', '#b9783a', '#f0b56a'],
-    mode: 'radial'
+    mode: 'radial',
+    img: 'assets/sample/one-of-one.jpg'
   },
   {
-    name: 'Mono study',
+    name: 'Dark',
     cells: 3,
     palette: ['#050505', '#242424', '#555555', '#9a9a9a', '#e6e2d7'],
-    mode: 'checker'
+    mode: 'checker',
+    img: 'assets/sample/dark.jpg'
   },
   {
-    name: 'Garden map',
+    name: 'Wave',
     cells: 3,
     palette: ['#05100c', '#17483c', '#2f7a57', '#a98643', '#d8d0bd'],
-    mode: 'islands'
+    mode: 'islands',
+    img: 'assets/sample/wave.jpg'
   },
   {
     name: 'Heat trace',
@@ -1036,6 +1450,26 @@ function colorFromStyle(style, x, y, rand) {
   return style.palette[Math.max(0, Math.min(style.palette.length - 1, index))];
 }
 
+// cache loaded gallery images so each src is only fetched once
+const tileImageCache = new Map();
+function loadTileImage(src) {
+  let img = tileImageCache.get(src);
+  if (!img) {
+    img = new Image();
+    img.src = src;
+    tileImageCache.set(src, img);
+  }
+  return img;
+}
+
+// draw an image as a centred "cover" fit inside the square tile
+function drawCover(ctx, img, size) {
+  const scale = Math.max(size / img.width, size / img.height);
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+}
+
 function renderTile(canvas, seed, style) {
   const ctx = canvas.getContext('2d');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -1044,6 +1478,19 @@ function renderTile(canvas, seed, style) {
   canvas.width = size * dpr;
   canvas.height = size * dpr;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  // image-backed tile: paint the photo cover-fit instead of procedural cells
+  if (style.img) {
+    const img = loadTileImage(style.img);
+    const paint = () => {
+      ctx.fillStyle = '#060606';
+      ctx.fillRect(0, 0, size, size);
+      drawCover(ctx, img, size);
+    };
+    if (img.complete && img.naturalWidth) paint();
+    else img.addEventListener('load', paint, { once: true });
+    return;
+  }
 
   const rand = rng(seed);
   ctx.fillStyle = '#060606';
@@ -1060,8 +1507,8 @@ function renderTile(canvas, seed, style) {
     }
   }
   ctx.globalAlpha = 1;
-  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.lineWidth = 2;
   for (let line = 0; line <= cells; line++) {
     const pos = line * cell;
     ctx.beginPath();
@@ -1073,47 +1520,140 @@ function renderTile(canvas, seed, style) {
   }
 }
 
+// caption: photo tiles show just the name, procedural tiles keep the grid size
+function tileCaption(style) {
+  return style.img
+    ? style.name
+    : `${style.cells} × ${style.cells} · ${style.name}`;
+}
+
 const grid = document.getElementById('gallery-grid');
 if (grid) {
   const TILE_COUNT = 8;
-  const baseSeed = Math.floor(Math.random() * 1e6);
-  // Track the style shown in every tile so no two tiles ever match.
-  const displayedStyles = new Array(TILE_COUNT);
+  // Fixed seed so the 8 gallery tiles are static and identical on every load.
+  const baseSeed = 424242;
 
   for (let i = 0; i < TILE_COUNT; i++) {
     const tile = document.createElement('div');
     tile.className = 'tile';
-    const id = document.createElement('span');
-    id.className = 'tile-id';
     const seed = baseSeed + i * 7919;
     const currentStyle = GALLERY_STYLES[i % GALLERY_STYLES.length];
-    displayedStyles[i] = currentStyle;
-    id.textContent = '#' + (1 + (seed % 12000)).toString().padStart(5, '0');
     const c = document.createElement('canvas');
     const caption = document.createElement('span');
     caption.className = 'tile-caption';
-    caption.textContent = `${currentStyle.cells} × ${currentStyle.cells} · ${currentStyle.name}`;
-    tile.append(c, id, caption);
+    caption.textContent = tileCaption(currentStyle);
+    tile.append(c, caption);
     grid.appendChild(tile);
     requestAnimationFrame(() => renderTile(c, seed, currentStyle));
-
-    tile.addEventListener('click', () => {
-      const newSeed = Math.floor(Math.random() * 1e6);
-      // Only pick a style that no other tile is currently showing.
-      const available = GALLERY_STYLES.filter(
-        (style) => !displayedStyles.includes(style)
-      );
-      if (!available.length) return; // every style already on screen
-      const newStyle = available[Math.floor(Math.random() * available.length)];
-      displayedStyles[i] = newStyle;
-
-      id.textContent = '#' + (1 + (newSeed % 12000)).toString().padStart(5, '0');
-      caption.textContent = `${newStyle.cells} × ${newStyle.cells} · ${newStyle.name}`;
-
-      tile.classList.add('tile-flash');
-      tile.addEventListener('animationend', () => tile.classList.remove('tile-flash'), { once: true });
-
-      renderTile(c, newSeed, newStyle);
-    });
   }
 }
+
+// ---- hero flip-board reveal (airport split-flap style) ----
+(() => {
+  const stage = document.querySelector('.pixel-stage');
+  const img = stage?.querySelector('.pixel-board-image');
+  if (!stage || !img) return;
+  // respect reduced-motion: show the image as-is, no flipping
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // The logo is a 7 x 9 grid of rounded tiles. We build a flap per logo tile so
+  // the spinning board matches the static image exactly (same tiles + spacing).
+  const COLS = 7;
+  const ROWS = 9;
+  const SAMPLE = 160;      // working resolution for sampling/bbox detection
+  const BG_THRESHOLD = 45; // anything darker is background (no tile there)
+
+  function buildFlipBoard() {
+    const cv = document.createElement('canvas');
+    cv.width = SAMPLE;
+    cv.height = SAMPLE;
+    const cx = cv.getContext('2d');
+    cx.drawImage(img, 0, 0, SAMPLE, SAMPLE);
+    let data;
+    try {
+      data = cx.getImageData(0, 0, SAMPLE, SAMPLE).data;
+    } catch (e) {
+      return; // canvas tainted — leave the static image
+    }
+    const bright = (x, y) => {
+      const i = ((y | 0) * SAMPLE + (x | 0)) * 4;
+      return Math.max(data[i], data[i + 1], data[i + 2]);
+    };
+
+    // find the logo's bounding box (so the grid sits exactly over it)
+    let x0 = SAMPLE, x1 = 0, y0 = SAMPLE, y1 = 0;
+    for (let y = 0; y < SAMPLE; y++) {
+      for (let x = 0; x < SAMPLE; x++) {
+        if (bright(x, y) > BG_THRESHOLD) {
+          if (x < x0) x0 = x; if (x > x1) x1 = x;
+          if (y < y0) y0 = y; if (y > y1) y1 = y;
+        }
+      }
+    }
+    if (x1 < x0) return;
+    const bw = x1 - x0 + 1, bh = y1 - y0 + 1;
+    const tw = bw / COLS, th = bh / ROWS;
+
+    const backdrop = document.createElement('div');
+    backdrop.className = 'pixel-flip-backdrop';
+
+    const board = document.createElement('div');
+    board.className = 'pixel-flip-grid';
+    board.style.setProperty('--cols', COLS);
+    board.style.setProperty('--rows', ROWS);
+    board.style.left = (x0 / SAMPLE * 100) + '%';
+    board.style.top = (y0 / SAMPLE * 100) + '%';
+    board.style.width = (bw / SAMPLE * 100) + '%';
+    board.style.height = (bh / SAMPLE * 100) + '%';
+
+    // one cell per logo tile; skip the empty (background) tiles
+    const cells = [];
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const cxp = x0 + (c + 0.5) * tw;
+        const cyp = y0 + (r + 0.5) * th;
+        let R = 0, G = 0, B = 0, n = 0, mx = 0;
+        for (let dy = -1; dy <= 1; dy++) {
+          for (let dx = -1; dx <= 1; dx++) {
+            const i = (((cyp + dy) | 0) * SAMPLE + ((cxp + dx) | 0)) * 4;
+            R += data[i]; G += data[i + 1]; B += data[i + 2]; n++;
+            mx = Math.max(mx, data[i], data[i + 1], data[i + 2]);
+          }
+        }
+        if (mx < BG_THRESHOLD) continue; // no tile here
+        const color = `rgb(${(R / n) | 0}, ${(G / n) | 0}, ${(B / n) | 0})`;
+        const cell = document.createElement('span');
+        cell.className = 'pixel-flip-cell';
+        cell.style.gridColumn = c + 1;
+        cell.style.gridRow = r + 1;
+        cell.style.setProperty('--c', '#ffffff'); // blinks white until revealed
+        board.appendChild(cell);
+        cells.push({ el: cell, color });
+      }
+    }
+    stage.appendChild(backdrop);
+    stage.appendChild(board);
+
+    let maxEnd = 0;
+
+    // Every cell blinks (loading), then each pops into its final colour at a
+    // different random moment until the whole logo has appeared.
+    cells.forEach(({ el, color }) => {
+      const revealAt = 250 + Math.random() * 1500; // staggered, cell by cell
+      setTimeout(() => {
+        el.style.setProperty('--c', color);
+        el.classList.add('on');
+      }, revealAt);
+      if (revealAt > maxEnd) maxEnd = revealAt;
+    });
+
+    // once every cell has appeared, drop the overlay to show the crisp image
+    setTimeout(() => {
+      board.remove();
+      backdrop.remove();
+    }, maxEnd + 500);
+  }
+
+  if (img.complete && img.naturalWidth) buildFlipBoard();
+  else img.addEventListener('load', buildFlipBoard, { once: true });
+})();

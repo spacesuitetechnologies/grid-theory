@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Grid Theory — Lab</title>
+  <meta name="description" content="Connect your web3 wallet, build pixel art from owned Grid Theory NFTs, and verify physical print certificates." />
+
+  <!-- Fontshare: General Sans (display/body) + JetBrains Mono for metadata -->
+  <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+  <link rel="icon" type="image/png" href="assets/logo-favicon.png?v=40" />
+  <link rel="shortcut icon" type="image/png" href="assets/logo-favicon.png?v=40" />
+  <link rel="apple-touch-icon" href="assets/logo-favicon.png?v=40" />
+  <link rel="stylesheet" href="styles.css?v=40" />
+</head>
+<body>
+  <!-- Thin framed border -->
+  <div class="frame" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="site-name" href="index.html#home" aria-label="Grid Theory">Grid Theory</a>
+
+    <nav class="nav" aria-label="Primary">
+      <a href="index.html#home" class="nav-link">Home</a>
+      <a href="index.html#builder" class="nav-link">Builder</a>
+      <a href="index.html#gallery" class="nav-link">Traits</a>
+      <a href="lab.html" class="nav-link is-active">Lab</a>
+      <a href="#store" class="nav-link nav-link-locked" data-locked-nav>Store</a>
+    </nav>
+
+    <button class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">
+      <span></span><span></span>
+    </button>
+  </header>
+
+  <main>
+    <!-- LAB -->
+    <section id="lab" class="panel builder-panel lab-page">
+      <div class="panel-head builder-head">
+        <div>
+          <span class="section-index">LAB</span>
+          <h2 class="panel-title">Build from your owned Grid Theory NFTs.</h2>
+        </div>
+        <div class="lab-wallet">
+          <button class="wallet-button" type="button" id="connect-wallet">Connect wallet</button>
+          <small id="wallet-status">Connect your web3 wallet to load owned Grid Theory NFTs — or play with the sample shades below.</small>
+        </div>
+      </div>
+
+      <div class="builder-shell">
+        <aside class="nft-drawer" aria-label="Owned NFT collection palette">
+          <div class="drawer-head">
+            <span>Owned NFTs</span>
+            <strong class="nft-count" id="nft-count">Owned NFTs: Connect wallet</strong>
+            <small>Click a shade then click squares, or drag shades into the grid. Drag a placed shade back here to remove it.</small>
+          </div>
+          <div class="nft-palette" id="nft-palette"></div>
+        </aside>
+
+        <div class="builder-workspace">
+          <div class="builder-toolbar" aria-label="Lab controls">
+            <div class="builder-grid-controls" aria-label="Choose grid size">
+              <button type="button" data-builder-size="4">4 × 4</button>
+              <button type="button" data-builder-size="6">6 × 6</button>
+              <button type="button" data-builder-size="8" class="is-active">8 × 8</button>
+              <button type="button" data-builder-size="12">12 × 12</button>
+            </div>
+            <div class="download-group">
+              <input class="art-name-input" type="text" id="art-name" placeholder="Name your art" maxlength="22" autocomplete="off" aria-label="Name your art" />
+              <button class="download-button" type="button" id="download-art">Download</button>
+            </div>
+          </div>
+
+          <div class="builder-board-wrap">
+            <div class="builder-board" id="builder-board" aria-label="Build pixel art from owned NFTs"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- certificate verification -->
+      <div class="cert-verify">
+        <span class="section-index">CERTIFICATE</span>
+        <h3 class="cert-title">Verify a physical print certificate.</h3>
+        <p class="cert-note">
+          Every burned-to-physical print ships with an authenticity certificate.
+          Enter its certificate number to confirm the print is a genuine Grid Theory edition.
+        </p>
+        <form class="cert-form" id="cert-form" novalidate>
+          <input type="text" id="cert-input" placeholder="GT-PRINT-0001" autocomplete="off" aria-label="Certificate number" />
+          <button type="submit">Verify</button>
+        </form>
+        <div class="cert-result" id="cert-result" role="status" aria-live="polite"></div>
+      </div>
+
+      <p class="panel-note">
+        Connect a wallet with a deployed collection contract (set in script.js) to load
+        real owned NFTs, or use the sample shades to try the canvas now.
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span class="foot-tag">12,000 PIXELS · MINT · CREATE</span>
+  </footer>
+
+  <!-- corner social controls -->
+  <div class="social" aria-label="Social links">
+    <a href="https://opensea.io/gridtheory" aria-label="OpenSea" title="OpenSea" target="_blank" rel="noreferrer">
+      <span>OpenSea</span>
+    </a>
+    <a href="https://x.com/" aria-label="X" title="X" target="_blank" rel="noreferrer">
+      <span>X</span>
+    </a>
+  </div>
+
+  <script src="script.js?v=40"></script>
+</body>
+</html>
