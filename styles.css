@@ -1410,14 +1410,31 @@ main,
     flex-direction: column;
     gap: 8px;
     align-items: flex-start;
-    padding-bottom: 74px;
+    padding-bottom: 18px;
   }
 
+  /* On mobile the corner social buttons floated over content — let them flow
+     at the bottom of the page instead of overlapping. */
   .social {
-    left: calc(var(--frame-inset) + 16px);
-    right: auto;
-    bottom: calc(var(--frame-inset) + 14px);
-    gap: 8px;
+    position: static;
+    inset: auto;
+    justify-content: center;
+    gap: 10px;
+    padding: 4px var(--pad-x) calc(var(--frame-inset) + 22px);
+  }
+
+  /* Solid backdrop behind the fixed header so page content doesn't bleed
+     through it while scrolling. */
+  .topbar::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 62px;
+    background: linear-gradient(var(--bg) 68%, transparent);
+    z-index: -1;
+    pointer-events: none;
   }
 
   .social a {
