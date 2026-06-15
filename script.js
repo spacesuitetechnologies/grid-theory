@@ -824,9 +824,18 @@ function artNameOrDefault(input) {
   return (input?.value || '').trim() || 'Grid Theory Sample';
 }
 
+// true when at least one cell has a colour/design placed (not the empty square)
+function gridHasContent(pixels) {
+  return pixels.some((c) => c && c !== '#101010');
+}
+
 const demoArtNameInput = document.getElementById('demo-art-name');
 
 demoDownloadButton?.addEventListener('click', () => {
+  if (!gridHasContent(demoPixels)) {
+    if (demoStatus) demoStatus.textContent = 'Add at least one colour to the grid before downloading.';
+    return;
+  }
   const name = artNameOrDefault(demoArtNameInput);
   downloadArtCard(demoPixels, demoSize, name);
 });
@@ -1147,6 +1156,10 @@ async function loadOwnedCollectionNfts(ownerAddress) {
 const labArtNameInput = document.getElementById('art-name');
 
 downloadButton?.addEventListener('click', () => {
+  if (!gridHasContent(builderPixels)) {
+    if (walletStatus) walletStatus.textContent = 'Add at least one shade to the grid before downloading.';
+    return;
+  }
   const name = artNameOrDefault(labArtNameInput);
   downloadArtCard(builderPixels, builderSize, name);
 });
