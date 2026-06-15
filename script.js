@@ -146,7 +146,7 @@ document.addEventListener('click', (event) => {
 }, true);
 
 // ---- active section tracking ----
-const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery'].map((id) => document.getElementById(id));
+const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
 const links = document.querySelectorAll('.nav-link');
 const obs = new IntersectionObserver(
   (entries) => {
@@ -1546,4 +1546,32 @@ if (grid) {
     grid.appendChild(tile);
     requestAnimationFrame(() => renderTile(c, seed, currentStyle));
   }
+}
+
+// ---- gallery: example creations (different image types you can compose) ----
+const CREATION_STYLES = [
+  { name: 'Gradient blend', cells: 6, palette: ['#1c150a', '#6b4f24', '#b08534', '#e0bd6a', '#f6ead0'], mode: 'diagonal' },
+  { name: 'Ocean waves',    cells: 6, palette: ['#07151a', '#0b6f73', '#1ca3a5', '#8fc9c4', '#e8f3ed'], mode: 'wave' },
+  { name: 'Radial burst',   cells: 6, palette: ['#09040f', '#2a1743', '#65305d', '#b9783a', '#f0b56a'], mode: 'radial' },
+  { name: 'Pixel grid',     cells: 4, palette: ['#050505', '#ff4d4d', '#4f8dff', '#f0b56a', '#f7f2e8'], mode: 'primary' },
+  { name: 'Stone mosaic',   cells: 4, palette: ['#070a0f', '#1f3a52', '#3f6c8c', '#86a8c4', '#e3edf5'], mode: 'blocks' },
+  { name: 'Neon checker',   cells: 3, palette: ['#0a0014', '#ff2db2', '#2dd4ff', '#f5ff2d', '#ffffff'], mode: 'checker' },
+  { name: 'Heat map',       cells: 6, palette: ['#100606', '#9b2f22', '#c98534', '#f2aa35', '#fff0c7'], mode: 'stripes' },
+  { name: 'Garden islands', cells: 3, palette: ['#05100c', '#17483c', '#2f7a57', '#a98643', '#d8d0bd'], mode: 'islands' }
+];
+
+const creationsGrid = document.getElementById('creations-grid');
+if (creationsGrid) {
+  const seedBase = 90210;
+  CREATION_STYLES.forEach((style, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    const c = document.createElement('canvas');
+    const caption = document.createElement('span');
+    caption.className = 'tile-caption';
+    caption.textContent = style.name; // the type of image
+    tile.append(c, caption);
+    creationsGrid.appendChild(tile);
+    requestAnimationFrame(() => renderTile(c, seedBase + i * 4099, style));
+  });
 }
