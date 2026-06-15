@@ -408,7 +408,9 @@ const DEMO_COLOURS = [
   { tokenId: 'D09', color: '#8b5a32' },
   { tokenId: 'D10', color: '#d88a35' },
   { tokenId: 'D11', color: '#f0b56a' },
-  { tokenId: 'D12', color: '#ff4d4d' }
+  { tokenId: 'D12', color: '#ff4d4d' },
+  { tokenId: 'D13', color: 'linear-gradient(135deg, #ff8fab 0%, #f0b56a 50%, #1ca3a5 100%)' },
+  { tokenId: 'D14', color: 'url("assets/sample/one-of-one.jpg") center / cover no-repeat' }
 ];
 
 let demoSize = 2;
@@ -688,12 +690,21 @@ function renderArtCard(pixels, size, code, name) {
   const ax = Math.round(bx0 + (boxW - side) / 2);
   const ay = Math.round(top + (boxH - side) / 2);
 
+  // map a cell value to a solid colour for the flat PNG export (design fills
+  // like gradients/images can't be drawn as a flat fillStyle, so substitute a
+  // representative colour).
+  const solidFor = (color) => {
+    if (!color || color === '#101010') return '#ffffff';
+    if (color[0] === '#') return color;
+    if (color.includes('gradient')) return '#f0b56a';
+    return '#1ca3a5';
+  };
+
   ctx.imageSmoothingEnabled = false;
   pixels.forEach((color, index) => {
     const x = index % size;
     const y = Math.floor(index / size);
-    // unused cells (the empty placeholder) render white
-    ctx.fillStyle = (!color || color === '#101010') ? '#ffffff' : color;
+    ctx.fillStyle = solidFor(color);
     ctx.fillRect(ax + x * cell, ay + y * cell, cell, cell);
   });
 
@@ -733,31 +744,48 @@ function slugify(name) {
   return name.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'untitled';
 }
 
+// Trigger a file download in a way that works across browsers: the anchor
+// MUST be in the document for Firefox/Safari to honour .click().
+function triggerDownload(href, filename, revoke) {
+  const link = document.createElement('a');
+  link.href = href;
+  link.download = filename;
+  link.rel = 'noopener';
+  link.style.display = 'none';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  if (revoke) setTimeout(() => URL.revokeObjectURL(href), 1500);
+}
+
 function downloadArtCard(pixels, size, prefix, name) {
   const code = makeNftCode();
   const canvas = renderArtCard(pixels, size, code, name);
-  const link = document.createElement('a');
-  link.download = `${prefix}-${slugify(name)}-${size}x${size}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  const filename = `${prefix}-${slugify(name)}-${size}x${size}.png`;
+
+  // Prefer a Blob URL (robust, no data-URI size limits); fall back to data URL.
+  if (canvas.toBlob) {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        triggerDownload(URL.createObjectURL(blob), filename, true);
+      } else {
+        triggerDownload(canvas.toDataURL('image/png'), filename, false);
+      }
+    }, 'image/png');
+  } else {
+    triggerDownload(canvas.toDataURL('image/png'), filename, false);
+  }
 }
 
-// Get the art name from an input; if empty, focus it and return null.
-function requireArtName(input, statusEl) {
-  const name = (input?.value || '').trim();
-  if (!name) {
-    if (statusEl) statusEl.textContent = 'Name your art before downloading.';
-    input?.focus();
-    return null;
-  }
-  return name;
+// Use the typed name, or fall back to a default so the download always works.
+function artNameOrDefault(input) {
+  return (input?.value || '').trim() || 'grid-theory';
 }
 
 const demoArtNameInput = document.getElementById('demo-art-name');
 
 demoDownloadButton?.addEventListener('click', () => {
-  const name = requireArtName(demoArtNameInput, demoStatus);
-  if (!name) return;
+  const name = artNameOrDefault(demoArtNameInput);
   downloadArtCard(demoPixels, demoSize, 'grid-theory-demo', name);
 });
 
@@ -1077,8 +1105,7 @@ async function loadOwnedCollectionNfts(ownerAddress) {
 const labArtNameInput = document.getElementById('art-name');
 
 downloadButton?.addEventListener('click', () => {
-  const name = requireArtName(labArtNameInput, walletStatus);
-  if (!name) return;
+  const name = artNameOrDefault(labArtNameInput);
   downloadArtCard(builderPixels, builderSize, 'grid-theory', name);
 });
 
@@ -1529,15 +1556,18 @@ function tileCaption(style) {
 
 const grid = document.getElementById('gallery-grid');
 if (grid) {
-  const TILE_COUNT = 8;
-  // Fixed seed so the 8 gallery tiles are static and identical on every load.
+  // Fixed seed so the tiles are static and identical on every load.
   const baseSeed = 424242;
+  // Shade Traits: image-based shades only, in this explicit order.
+  const order = ['Gradient', 'Pastel', 'Wave', 'Dark', '1/1'];
+  const traitStyles = order
+    .map((n) => GALLERY_STYLES.find((s) => s.name === n))
+    .filter(Boolean);
 
-  for (let i = 0; i < TILE_COUNT; i++) {
+  traitStyles.forEach((currentStyle, i) => {
     const tile = document.createElement('div');
     tile.className = 'tile';
     const seed = baseSeed + i * 7919;
-    const currentStyle = GALLERY_STYLES[i % GALLERY_STYLES.length];
     const c = document.createElement('canvas');
     const caption = document.createElement('span');
     caption.className = 'tile-caption';
@@ -1545,7 +1575,15 @@ if (grid) {
     tile.append(c, caption);
     grid.appendChild(tile);
     requestAnimationFrame(() => renderTile(c, seed, currentStyle));
-  }
+  });
+
+  // "more traits hidden" placeholder tile
+  const hidden = document.createElement('div');
+  hidden.className = 'tile tile-hidden';
+  hidden.innerHTML =
+    '<span class="tile-q" aria-hidden="true">?</span>' +
+    '<span class="tile-caption">More traits hidden</span>';
+  grid.appendChild(hidden);
 }
 
 // ---- gallery: example creations (different image types you can compose) ----
