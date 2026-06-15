@@ -193,51 +193,6 @@ body::before {
   image-rendering: crisp-edges;
 }
 
-/* hero flip-board reveal: each cell starts white and flips to its colour,
-   split-flap (airport board) style. Grid is injected by script.js. */
-.pixel-stage {
-  position: relative;
-  width: 100%;
-  height: 100%;
-}
-/* black backdrop that hides the static image while the flaps are turning */
-.pixel-flip-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  background: #000;
-}
-/* grid is sized/positioned over the detected logo region by script.js */
-.pixel-flip-grid {
-  position: absolute;
-  z-index: 3;
-  display: grid;
-  grid-template-columns: repeat(var(--cols), 1fr);
-  grid-template-rows: repeat(var(--rows), 1fr);
-  gap: 9%;
-}
-/* each cell blinks like a loading placeholder until it is revealed */
-.pixel-flip-cell {
-  background: var(--c);
-  border-radius: 22%;
-  opacity: 0.2;
-  animation: cell-blink 0.55s ease-in-out infinite;
-}
-/* revealed: stop blinking and pop into the final colour */
-.pixel-flip-cell.on {
-  opacity: 1;
-  animation: cell-pop 0.3s ease-out both;
-}
-@keyframes cell-blink {
-  0%, 100% { opacity: 0.14; }
-  50%      { opacity: 0.55; }
-}
-@keyframes cell-pop {
-  0%   { transform: scale(0.5);  opacity: 0.3; }
-  60%  { transform: scale(1.1); }
-  100% { transform: scale(1);    opacity: 1; }
-}
-
 .hero-grid {
   width: 100%;
   height: 100%;
