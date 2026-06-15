@@ -630,6 +630,59 @@ demoSizeButtons.forEach((button) => {
   });
 });
 
+// ---- design-cell rendering (so downloads match exactly what's on the grid) ----
+// Some palette tokens aren't flat colours (gradient / image designs). Preload any
+// image-backed designs so the canvas export can draw the real pixels, not a stand-in.
+const designImageCache = {};
+function designSrc(value) {
+  const m = /url\(["']?([^"')]+)["']?\)/.exec(value || '');
+  return m ? m[1] : null;
+}
+function preloadDesignImage(value) {
+  const src = designSrc(value);
+  if (!src || designImageCache[src]) return;
+  const img = new Image();
+  img.src = src;
+  designImageCache[src] = img;
+}
+function drawImageCover(ctx, img, dx, dy, dw, dh) {
+  const scale = Math.max(dw / img.naturalWidth, dh / img.naturalHeight);
+  const sw = dw / scale, sh = dh / scale;
+  const sx = (img.naturalWidth - sw) / 2, sy = (img.naturalHeight - sh) / 2;
+  ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+}
+// Paint one cell to match its on-screen background: flat colour, CSS gradient, or image.
+function fillArtCell(ctx, value, dx, dy, dw, dh) {
+  if (!value || value === '#101010') {            // empty cell
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(dx, dy, dw, dh);
+    return;
+  }
+  if (value[0] === '#') {                          // flat colour
+    ctx.fillStyle = value;
+    ctx.fillRect(dx, dy, dw, dh);
+    return;
+  }
+  if (value.includes('gradient')) {                // matches the D13 CSS gradient (135deg)
+    const g = ctx.createLinearGradient(dx, dy, dx + dw, dy + dh);
+    g.addColorStop(0, '#ff8fab');
+    g.addColorStop(0.5, '#f0b56a');
+    g.addColorStop(1, '#1ca3a5');
+    ctx.fillStyle = g;
+    ctx.fillRect(dx, dy, dw, dh);
+    return;
+  }
+  const img = designImageCache[designSrc(value)]; // image design (cover fit, like CSS)
+  if (img && img.complete && img.naturalWidth) {
+    drawImageCover(ctx, img, dx, dy, dw, dh);
+    return;
+  }
+  ctx.fillStyle = '#1ca3a5';                        // fallback if the image isn't ready yet
+  ctx.fillRect(dx, dy, dw, dh);
+}
+// preload image-backed designs now that the helpers + DEMO_COLOURS exist
+DEMO_COLOURS.forEach((t) => preloadDesignImage(t.color));
+
 // Render the pixel art as a framed Grid Theory card:
 //  - small "GRID THEORY" title top-left
 //  - the artwork fitted crisply in the main area
@@ -690,22 +743,11 @@ function renderArtCard(pixels, size, code, name) {
   const ax = Math.round(bx0 + (boxW - side) / 2);
   const ay = Math.round(top + (boxH - side) / 2);
 
-  // map a cell value to a solid colour for the flat PNG export (design fills
-  // like gradients/images can't be drawn as a flat fillStyle, so substitute a
-  // representative colour).
-  const solidFor = (color) => {
-    if (!color || color === '#101010') return '#ffffff';
-    if (color[0] === '#') return color;
-    if (color.includes('gradient')) return '#f0b56a';
-    return '#1ca3a5';
-  };
-
   ctx.imageSmoothingEnabled = false;
   pixels.forEach((color, index) => {
     const x = index % size;
     const y = Math.floor(index / size);
-    ctx.fillStyle = solidFor(color);
-    ctx.fillRect(ax + x * cell, ay + y * cell, cell, cell);
+    fillArtCell(ctx, color, ax + x * cell, ay + y * cell, cell, cell);
   });
 
   // subtle cell separators
@@ -758,10 +800,10 @@ function triggerDownload(href, filename, revoke) {
   if (revoke) setTimeout(() => URL.revokeObjectURL(href), 1500);
 }
 
-function downloadArtCard(pixels, size, prefix, name) {
+function downloadArtCard(pixels, size, name) {
   const code = makeNftCode();
   const canvas = renderArtCard(pixels, size, code, name);
-  const filename = `${prefix}-${slugify(name)}-${size}x${size}.png`;
+  const filename = `${slugify(name)}.png`;
 
   // Prefer a Blob URL (robust, no data-URI size limits); fall back to data URL.
   if (canvas.toBlob) {
@@ -779,14 +821,14 @@ function downloadArtCard(pixels, size, prefix, name) {
 
 // Use the typed name, or fall back to a default so the download always works.
 function artNameOrDefault(input) {
-  return (input?.value || '').trim() || 'grid-theory';
+  return (input?.value || '').trim() || 'Grid Theory Sample';
 }
 
 const demoArtNameInput = document.getElementById('demo-art-name');
 
 demoDownloadButton?.addEventListener('click', () => {
   const name = artNameOrDefault(demoArtNameInput);
-  downloadArtCard(demoPixels, demoSize, 'grid-theory-demo', name);
+  downloadArtCard(demoPixels, demoSize, name);
 });
 
 renderDemoPalette();
@@ -1106,7 +1148,7 @@ const labArtNameInput = document.getElementById('art-name');
 
 downloadButton?.addEventListener('click', () => {
   const name = artNameOrDefault(labArtNameInput);
-  downloadArtCard(builderPixels, builderSize, 'grid-theory', name);
+  downloadArtCard(builderPixels, builderSize, name);
 });
 
 function shortAddress(address) {
