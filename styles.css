@@ -1138,14 +1138,6 @@ main,
   border-style: dashed;
   border-color: rgba(255,255,255,0.22);
 }
-.tile-q {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: clamp(30px, 6vw, 54px);
-  color: var(--faint);
-  line-height: 1;
-}
-.tile-hidden:hover .tile-q { color: var(--accent); }
 .tile-id {
   position: absolute;
   top: 8px; left: 9px;

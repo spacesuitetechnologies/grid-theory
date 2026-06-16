@@ -248,7 +248,7 @@ gridCards.forEach(renderGridSizePreview);
 if (field) {
   const ctx = field.getContext('2d');
   let w, h, dpr;
-  let gridSize = 6;
+  let gridSize = 2;
   let activePixel = null;
   let lastPaint = 0;
   let animationStart = 0;
@@ -409,8 +409,16 @@ const DEMO_COLOURS = [
   { tokenId: 'D10', color: '#d88a35' },
   { tokenId: 'D11', color: '#f0b56a' },
   { tokenId: 'D12', color: '#ff4d4d' },
-  { tokenId: 'D13', color: 'linear-gradient(135deg, #ff8fab 0%, #f0b56a 50%, #1ca3a5 100%)' },
-  { tokenId: 'D14', color: 'url("assets/sample/one-of-one.jpg") center / cover no-repeat' }
+  { tokenId: 'D13', color: '#ff8fab' },
+  { tokenId: 'D14', color: '#c44569' },
+  { tokenId: 'D15', color: '#4f8dff' },
+  { tokenId: 'D16', color: '#2dd4ff' },
+  { tokenId: 'D17', color: '#7c3aed' },
+  { tokenId: 'D18', color: '#200f36' },
+  { tokenId: 'D19', color: '#ffc247' },
+  { tokenId: 'D20', color: '#a7f070' },
+  { tokenId: 'D21', color: '#ffffff' },
+  { tokenId: 'D22', color: 'url("assets/sample/one-of-one.jpg") center / cover no-repeat' }
 ];
 
 let demoSize = 2;
@@ -1635,9 +1643,7 @@ if (grid) {
   // "more traits hidden" placeholder tile
   const hidden = document.createElement('div');
   hidden.className = 'tile tile-hidden';
-  hidden.innerHTML =
-    '<span class="tile-q" aria-hidden="true">?</span>' +
-    '<span class="tile-caption">More traits hidden</span>';
+  hidden.innerHTML = '<span class="tile-caption">More traits hidden</span>';
   grid.appendChild(hidden);
 }
 
