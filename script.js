@@ -1483,6 +1483,13 @@ const GALLERY_STYLES = [
     img: 'assets/sample/wave.jpg'
   },
   {
+    name: 'Brush stroke',
+    cells: 3,
+    palette: ['#07151a', '#0b6f73', '#1ca3a5', '#8fc9c4', '#e8f3ed'],
+    mode: 'wave',
+    img: 'assets/sample/brush-stroke.png'
+  },
+  {
     name: 'Heat trace',
     cells: 6,
     palette: ['#100606', '#9b2f22', '#c98534', '#f2aa35', '#fff0c7'],
@@ -1630,7 +1637,7 @@ if (grid) {
   // Fixed seed so the tiles are static and identical on every load.
   const baseSeed = 424242;
   // Shade Traits: image-based shades only, in this explicit order.
-  const order = ['Gradient', 'Pastel', 'Wave', 'Dark', '1/1'];
+  const order = ['Gradient', 'Pastel', 'Wave', 'Dark', '1/1', 'Brush stroke'];
   const traitStyles = order
     .map((n) => GALLERY_STYLES.find((s) => s.name === n))
     .filter(Boolean);
