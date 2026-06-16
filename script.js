@@ -715,12 +715,20 @@ function renderArtCard(pixels, size, code, name) {
 
   const margin = 64;
 
-  // smaller title (top-left)
+  // smaller title (top-left) — "GRID THEORY" with the E in THEORY in red
   ctx.textBaseline = 'alphabetic';
-  ctx.fillStyle = '#1b1b2e';
   ctx.font = '700 40px ui-monospace, "JetBrains Mono", monospace';
   ctx.textAlign = 'left';
-  ctx.fillText('GRID THEORY', margin, 96);
+  let titleX = margin;
+  [
+    { t: 'GRID TH', c: '#1b1b2e' },
+    { t: 'E', c: '#ff4d4d' },
+    { t: 'ORY', c: '#1b1b2e' }
+  ].forEach((part) => {
+    ctx.fillStyle = part.c;
+    ctx.fillText(part.t, titleX, 96);
+    titleX += ctx.measureText(part.t).width;
+  });
 
   // tagline (top-right)
   ctx.fillStyle = '#9a958a';
@@ -770,6 +778,14 @@ function renderArtCard(pixels, size, code, name) {
     ctx.lineTo(ax + side, ay + p);
     ctx.stroke();
   }
+
+  // footer divider (mirrors the header divider) — below the art, above the info
+  ctx.strokeStyle = '#e7e3da';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(30, codeY - 40);
+  ctx.lineTo(W - 30, codeY - 40);
+  ctx.stroke();
 
   // footer row — token id (left), art name (center), standard (right), same style
   ctx.fillStyle = '#1b1b2e';
