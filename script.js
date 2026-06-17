@@ -146,7 +146,7 @@ document.addEventListener('click', (event) => {
 }, true);
 
 // ---- active section tracking ----
-const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
+const sections = ['home', 'mint', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
 const links = document.querySelectorAll('.nav-link');
 const obs = new IntersectionObserver(
   (entries) => {
@@ -1689,3 +1689,84 @@ if (creationsGrid) {
     requestAnimationFrame(() => renderTile(c, seedBase + i * 4099, style));
   });
 }
+
+// ---- priority mint: Non Playable Characters (NPC) holder eligibility ----
+const NPC_CONFIG = {
+  // Non Playable Characters (NPC) ERC-721 collection CONTRACT on Ethereum mainnet.
+  // IMPORTANT: this must be the NFT contract address (the one with balanceOf),
+  // NOT the deployer/creator wallet. While blank, the checker stays in
+  // "opening soon" mode and never passes anyone.
+  //   Deployer/creator wallet (reference only, NOT used for verification):
+  //   0x7E7978f593BF372F78837d2d97E99ed0258a579f
+  // Non Playable Character (NPC) — verified ERC-721, symbol NPC, supply 10,000.
+  contract: '0xA2a6063B910fC7A7a286196F6c9b62B2797fa0Ae',
+  minBalance: 1,
+  // keyless public RPC endpoints (verified working + CORS-enabled).
+  // For production reliability, prepend your own Alchemy/Infura URL.
+  rpcUrls: ['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org', 'https://1rpc.io/eth']
+};
+
+const npcForm = document.getElementById('npc-form');
+const npcInput = document.getElementById('npc-input');
+const npcResult = document.getElementById('npc-result');
+
+function setNpcResult(message, state) {
+  if (!npcResult) return;
+  npcResult.textContent = message;
+  npcResult.classList.toggle('is-valid', state === true);
+  npcResult.classList.toggle('is-invalid', state === false);
+}
+
+const isEthAddress = (a) => /^0x[0-9a-fA-F]{40}$/.test(a);
+
+// Real on-chain balanceOf(owner) against the NPC contract via public RPC.
+async function npcBalanceOf(owner) {
+  const data = '0x70a08231' + encodeAddress(owner); // balanceOf(address)
+  const body = JSON.stringify({
+    jsonrpc: '2.0', id: 1, method: 'eth_call',
+    params: [{ to: NPC_CONFIG.contract, data }, 'latest']
+  });
+  for (const url of NPC_CONFIG.rpcUrls) {
+    try {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body });
+      const json = await res.json();
+      if (json && typeof json.result === 'string' && json.result.length >= 3) {
+        return BigInt(json.result);
+      }
+    } catch (e) {
+      // try the next endpoint
+    }
+  }
+  throw new Error('All RPC endpoints failed');
+}
+
+npcForm?.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const addr = (npcInput?.value || '').trim();
+  if (!isEthAddress(addr)) {
+    setNpcResult('Enter a valid Ethereum wallet address (0x followed by 40 characters).', false);
+    return;
+  }
+  if (!NPC_CONFIG.contract) {
+    setNpcResult('Eligibility checks open soon — the NPC collection contract is not set yet.', null);
+    return;
+  }
+  const submitBtn = npcForm.querySelector('button');
+  setNpcResult('Checking the blockchain…', null);
+  if (submitBtn) submitBtn.disabled = true;
+  try {
+    const balance = await npcBalanceOf(addr);
+    if (balance >= BigInt(NPC_CONFIG.minBalance)) {
+      setNpcResult(
+        `Eligible ✓ This wallet holds ${balance} Non Playable Characters NFT${balance > 1n ? 's' : ''} — you're on the priority mint list.`,
+        true
+      );
+    } else {
+      setNpcResult('Not eligible — no Non Playable Characters NFTs found in this wallet.', false);
+    }
+  } catch {
+    setNpcResult('Could not reach the network right now. Please try again in a moment.', false);
+  } finally {
+    if (submitBtn) submitBtn.disabled = false;
+  }
+});
