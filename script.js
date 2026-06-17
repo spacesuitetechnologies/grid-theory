@@ -146,7 +146,7 @@ document.addEventListener('click', (event) => {
 }, true);
 
 // ---- active section tracking ----
-const sections = ['home', 'mint', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
+const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
 const links = document.querySelectorAll('.nav-link');
 const obs = new IntersectionObserver(
   (entries) => {
@@ -1706,17 +1706,6 @@ const NPC_CONFIG = {
   rpcUrls: ['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org', 'https://1rpc.io/eth']
 };
 
-const npcForm = document.getElementById('npc-form');
-const npcInput = document.getElementById('npc-input');
-const npcResult = document.getElementById('npc-result');
-
-function setNpcResult(message, state) {
-  if (!npcResult) return;
-  npcResult.textContent = message;
-  npcResult.classList.toggle('is-valid', state === true);
-  npcResult.classList.toggle('is-invalid', state === false);
-}
-
 const isEthAddress = (a) => /^0x[0-9a-fA-F]{40}$/.test(a);
 
 // Real on-chain balanceOf(owner) against the NPC contract via public RPC.
@@ -1740,33 +1729,102 @@ async function npcBalanceOf(owner) {
   throw new Error('All RPC endpoints failed');
 }
 
-npcForm?.addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const addr = (npcInput?.value || '').trim();
-  if (!isEthAddress(addr)) {
-    setNpcResult('Enter a valid Ethereum wallet address (0x followed by 40 characters).', false);
-    return;
+// ---- verify popup (built on the same modal pattern as the wallet picker) ----
+let verifyModalEl = null;
+
+function closeVerifyModal() {
+  verifyModalEl?.classList.remove('is-visible');
+}
+
+function openVerifyModal() {
+  if (!verifyModalEl) {
+    verifyModalEl = document.createElement('div');
+    verifyModalEl.className = 'wallet-modal verify-modal';
+    verifyModalEl.setAttribute('role', 'dialog');
+    verifyModalEl.setAttribute('aria-modal', 'true');
+    document.body.appendChild(verifyModalEl);
+    verifyModalEl.addEventListener('click', (event) => {
+      if (event.target === verifyModalEl) closeVerifyModal();
+    });
   }
-  if (!NPC_CONFIG.contract) {
-    setNpcResult('Eligibility checks open soon — the NPC collection contract is not set yet.', null);
-    return;
-  }
-  const submitBtn = npcForm.querySelector('button');
-  setNpcResult('Checking the blockchain…', null);
-  if (submitBtn) submitBtn.disabled = true;
-  try {
-    const balance = await npcBalanceOf(addr);
-    if (balance >= BigInt(NPC_CONFIG.minBalance)) {
-      setNpcResult(
-        `Eligible ✓ This wallet holds ${balance} Non Playable Characters NFT${balance > 1n ? 's' : ''} — you're on the priority mint list.`,
-        true
-      );
-    } else {
-      setNpcResult('Not eligible — no Non Playable Characters NFTs found in this wallet.', false);
+
+  verifyModalEl.innerHTML = `
+    <div class="wallet-card">
+      <button class="wallet-close" type="button" aria-label="Close">Close</button>
+      <span class="wallet-eyebrow">Priority mint</span>
+      <h3>Only NPC legends mint first.</h3>
+      <p class="verify-intro">Plot twist: the Non Playable Characters were the main characters all along.
+        Hold an NPC and you skip the line on the Grid Theory drop. Drop your wallet and let's check your lore.</p>
+      <form class="cert-form verify-form" novalidate>
+        <input class="npc-input" type="text" placeholder="0x… your wallet address" autocomplete="off" spellcheck="false" aria-label="Wallet address" />
+        <button type="submit">Check my status</button>
+      </form>
+      <div class="cert-result verify-result" role="status" aria-live="polite"></div>
+    </div>`;
+
+  const input = verifyModalEl.querySelector('.npc-input');
+  const result = verifyModalEl.querySelector('.verify-result');
+  const form = verifyModalEl.querySelector('.verify-form');
+  const setResult = (msg, state) => {
+    result.textContent = msg;
+    result.classList.toggle('is-valid', state === true);
+    result.classList.toggle('is-invalid', state === false);
+  };
+
+  verifyModalEl.querySelector('.wallet-close').addEventListener('click', closeVerifyModal);
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const addr = (input.value || '').trim();
+    if (!isEthAddress(addr)) {
+      setResult("That's not a wallet, that's alphabet soup. Paste a real 0x… address, anon.", false);
+      return;
     }
-  } catch {
-    setNpcResult('Could not reach the network right now. Please try again in a moment.', false);
-  } finally {
-    if (submitBtn) submitBtn.disabled = false;
+    if (!NPC_CONFIG.contract) {
+      setResult('Eligibility opens soon — the NPC contract isn’t wired up yet.', null);
+      return;
+    }
+    const btn = form.querySelector('button');
+    setResult('Consulting the on-chain oracle for legendary energy…', null);
+    btn.disabled = true;
+    try {
+      const balance = await npcBalanceOf(addr);
+      if (balance >= BigInt(NPC_CONFIG.minBalance)) {
+        setResult(
+          `NPC legend confirmed ✓ This wallet holds ${balance} Non Playable Character${balance > 1n ? 's' : ''}. ` +
+          `The NPCs were the main characters all along — you're on the Grid Theory priority mint list. ` +
+          `Go ahead, skip the queue. 🫡`,
+          true
+        );
+      } else {
+        setResult(
+          "No NPC in this wallet — so right now you're just a... playable character (tragic, we know). " +
+          "Grab a Non Playable Character and come back to ascend to legend status and mint first.",
+          false
+        );
+      }
+    } catch {
+      setResult('The blockchain ghosted us. Give it a second and try again.', false);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  requestAnimationFrame(() => {
+    verifyModalEl.classList.add('is-visible');
+    input.focus();
+  });
+}
+
+// open the verify popup from the "Verify" nav item; Escape closes it
+document.addEventListener('click', (event) => {
+  if (event.target.closest?.('[data-verify-nav]')) {
+    event.preventDefault();
+    nav?.classList.remove('is-open');
+    toggle?.classList.remove('is-open');
+    openVerifyModal();
   }
+});
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape') closeVerifyModal();
 });
