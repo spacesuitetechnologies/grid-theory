@@ -1845,6 +1845,8 @@ const VAULT_PROJECTS = [
   {
     img: 'assets/vault/bonsai.jpg',
     name: 'On-Chain Bonsai',
+    // the bonsai sits low in its image — lift it so it shows above the info panel
+    imgTransform: 'translateY(-16%) scale(1.18)',
     desc: 'On-Chain Bonsai is a collection of 3,200 fully on-chain animated bonsai trees living in sync with Ethereum itself. Each bonsai experiences time through the blockchain: every 6,900 blocks, one month passes in its life — roughly a single day in ours. There are no buttons to press, no watering cans to fill, no shortcuts to growth. You cannot prune it, nurture it, or accelerate its journey. The bonsai grows on its own terms, guided only by time and the chain. Ownership is not about control — it is about observation.'
   },
   {
@@ -1879,6 +1881,7 @@ function renderVault() {
     cover.alt = it.name;
     cover.loading = 'lazy';
     cover.src = it.img;
+    if (it.imgTransform) cover.style.transform = it.imgTransform;
     const info = document.createElement('div');
     info.className = 'vault-frame-info';
     const h = document.createElement('strong');
