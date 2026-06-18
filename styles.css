@@ -246,7 +246,13 @@ body::before {
   flex-direction: column;
   gap: 5px;
 }
-.vault-name { font-size: 15px; font-weight: 500; letter-spacing: -0.01em; }
+.vault-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.vault-desc {
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 520px;
+}
 .vault-collection {
   font-family: var(--font-mono);
   font-size: 10.5px;

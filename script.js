@@ -1829,115 +1829,61 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeVerifyModal();
 });
 
-// ---- Grid Theory Digital Vault: artworks held by the treasury wallet ----
-const VAULT_WALLET = '0xc76b4bc9bf5044846733ba77d479db40bf341977';
 
-const IPFS_GATEWAYS = [
-  'https://ipfs.io/ipfs/',
-  'https://dweb.link/ipfs/',
-  'https://nftstorage.link/ipfs/',
-  'https://w3s.link/ipfs/'
+// ---- Grid Theory Digital Vault: curated projects (one image + blurb each) ----
+const VAULT_PROJECTS = [
+  {
+    img: 'assets/vault/state-of-the-art.avif',
+    name: 'STATE OF THE ART',
+    desc: 'Texture-rich abstract compositions that blur digital and analog — contemporary painting reimagined fully on-chain.'
+  },
+  {
+    img: 'assets/vault/bonsai.jpg',
+    name: 'On-Chain Bonsai',
+    desc: 'Living generative bonsai, drawn and stored entirely from smart-contract code — no servers, no IPFS, just the chain.'
+  },
+  {
+    img: 'assets/vault/npc.avif',
+    name: 'Non Playable Character',
+    desc: 'Minimalist pixel units that give identity to the overlooked background characters of games and culture.'
+  },
+  {
+    img: 'assets/vault/gloobs.avif',
+    name: 'The Gloobs',
+    desc: 'A playful cast of collectible creatures — soft, characterful, and impossible not to like.'
+  }
 ];
 
-// extract an ipfs CID+path from an ipfs:// URI or a /ipfs/ gateway URL
-function ipfsPath(it) {
-  const sources = [it.media_url, it.image_url, it.metadata?.image, it.metadata?.image_url];
-  for (const s of sources) {
-    if (!s) continue;
-    if (s.startsWith('ipfs://')) return s.slice(7).replace(/^ipfs\//, '');
-    const idx = s.indexOf('/ipfs/');
-    if (idx >= 0) return s.slice(idx + 6);
-  }
-  return null;
-}
-
-// Ordered list of image URLs to try (data URIs/http first, then IPFS gateways).
-function imageCandidates(it) {
-  const direct = it.image_url || it.media_url || it.metadata?.image || it.metadata?.image_url || '';
-  if (direct.startsWith('data:')) return [direct];
-  const path = ipfsPath(it);
-  if (path) return IPFS_GATEWAYS.map((g) => g + path);
-  return direct ? [direct] : [];
-}
-
-async function loadVault() {
+function renderVault() {
   const slider = document.getElementById('vault-slider');
   if (!slider) return;
-  try {
-    const res = await fetch(
-      `https://eth.blockscout.com/api/v2/addresses/${VAULT_WALLET}/nft?type=ERC-721%2CERC-1155`
-    );
-    const data = await res.json();
-    const items = (data.items || [])
-      .map((it) => ({
-        candidates: imageCandidates(it),
-        name: it.metadata?.name || (it.token?.name ? `${it.token.name} #${it.id}` : `#${it.id}`),
-        collection: it.token?.name || 'Unknown collection',
-        tokenId: it.id,
-        contract: it.token?.address_hash
-      }))
-      .filter((x) => x.candidates.length);
-    renderVault(slider, items);
-  } catch (e) {
-    slider.innerHTML = '<div class="vault-empty">The vault is resting — please try again shortly.</div>';
-  }
-}
+  const items = VAULT_PROJECTS;
 
-function renderVault(slider, items) {
-  if (!items.length) {
-    slider.innerHTML = '<div class="vault-empty">No artworks in the vault yet.</div>';
-    return;
-  }
   slider.innerHTML =
     '<div class="vault-stage">' +
-      '<button class="vault-nav vault-prev" type="button" aria-label="Previous artwork">‹</button>' +
+      '<button class="vault-nav vault-prev" type="button" aria-label="Previous project">‹</button>' +
       '<img class="vault-img" alt="" />' +
-      '<button class="vault-nav vault-next" type="button" aria-label="Next artwork">›</button>' +
+      '<button class="vault-nav vault-next" type="button" aria-label="Next project">›</button>' +
     '</div>' +
     '<div class="vault-meta">' +
       '<strong class="vault-name"></strong>' +
-      '<span class="vault-collection"></span>' +
-      '<a class="vault-link" target="_blank" rel="noreferrer">View on OpenSea ↗</a>' +
+      '<p class="vault-desc"></p>' +
     '</div>' +
     '<div class="vault-counter"></div>';
 
   const img = slider.querySelector('.vault-img');
   const nameEl = slider.querySelector('.vault-name');
-  const colEl = slider.querySelector('.vault-collection');
-  const linkEl = slider.querySelector('.vault-link');
+  const descEl = slider.querySelector('.vault-desc');
   const counter = slider.querySelector('.vault-counter');
   let i = 0;
 
-  let hopTimer;
   function show(n) {
     i = (n + items.length) % items.length;
     const it = items[i];
-    // try each candidate URL in turn; fall back to the next gateway on error
-    // OR if a gateway hangs (no load within the timeout)
-    let ci = 0;
-    clearTimeout(hopTimer);
-    const tryLoad = () => {
-      clearTimeout(hopTimer);
-      img.src = it.candidates[ci];
-      hopTimer = setTimeout(() => {
-        if (!img.naturalWidth && ci < it.candidates.length - 1) { ci += 1; tryLoad(); }
-      }, 3000);
-    };
-    img.onload = () => clearTimeout(hopTimer);
-    img.onerror = () => {
-      clearTimeout(hopTimer);
-      if (ci < it.candidates.length - 1) { ci += 1; tryLoad(); }
-    };
-    tryLoad();
+    img.src = it.img;
     img.alt = it.name;
     nameEl.textContent = it.name;
-    colEl.textContent = it.collection;
-    if (it.contract) {
-      linkEl.style.display = '';
-      linkEl.href = `https://opensea.io/assets/ethereum/${it.contract}/${it.tokenId}`;
-    } else {
-      linkEl.style.display = 'none';
-    }
+    descEl.textContent = it.desc;
     counter.textContent = `${i + 1} / ${items.length}`;
   }
 
@@ -1946,4 +1892,4 @@ function renderVault(slider, items) {
   show(0);
 }
 
-loadVault();
+renderVault();
