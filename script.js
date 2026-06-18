@@ -1855,41 +1855,65 @@ const VAULT_PROJECTS = [
 ];
 
 function renderVault() {
-  const slider = document.getElementById('vault-slider');
-  if (!slider) return;
+  const root = document.getElementById('vault-slider');
+  if (!root) return;
   const items = VAULT_PROJECTS;
 
-  slider.innerHTML =
-    '<div class="vault-stage">' +
+  root.innerHTML =
+    '<div class="vault-coverflow"><div class="vault-track"></div></div>' +
+    '<div class="vault-controls">' +
       '<button class="vault-nav vault-prev" type="button" aria-label="Previous project">‹</button>' +
-      '<img class="vault-img" alt="" />' +
+      '<span class="vault-counter"></span>' +
       '<button class="vault-nav vault-next" type="button" aria-label="Next project">›</button>' +
-    '</div>' +
-    '<div class="vault-meta">' +
-      '<strong class="vault-name"></strong>' +
-      '<p class="vault-desc"></p>' +
-    '</div>' +
-    '<div class="vault-counter"></div>';
+    '</div>';
 
-  const img = slider.querySelector('.vault-img');
-  const nameEl = slider.querySelector('.vault-name');
-  const descEl = slider.querySelector('.vault-desc');
-  const counter = slider.querySelector('.vault-counter');
-  let i = 0;
+  const track = root.querySelector('.vault-track');
+  const counter = root.querySelector('.vault-counter');
+  let active = 0;
 
-  function show(n) {
-    i = (n + items.length) % items.length;
-    const it = items[i];
-    img.src = it.img;
-    img.alt = it.name;
-    nameEl.textContent = it.name;
-    descEl.textContent = it.desc;
-    counter.textContent = `${i + 1} / ${items.length}`;
+  const frames = items.map((it, idx) => {
+    const fr = document.createElement('div');
+    fr.className = 'vault-frame';
+    const cover = document.createElement('img');
+    cover.className = 'vault-frame-img';
+    cover.alt = it.name;
+    cover.loading = 'lazy';
+    cover.src = it.img;
+    const info = document.createElement('div');
+    info.className = 'vault-frame-info';
+    const h = document.createElement('strong');
+    h.textContent = it.name;
+    const p = document.createElement('p');
+    p.textContent = it.desc;
+    info.append(h, p);
+    fr.append(cover, info);
+    fr.addEventListener('click', () => { if (idx !== active) { active = idx; update(); } });
+    track.appendChild(fr);
+    return fr;
+  });
+
+  function update() {
+    frames.forEach((fr, idx) => {
+      const o = idx - active;          // signed offset from the centre frame
+      const ao = Math.abs(o);
+      fr.style.transform =
+        `translate(-50%, -50%) translateX(${o * 62}%) translateZ(${-ao * 150}px) ` +
+        `rotateY(${-o * 42}deg) scale(${Math.max(0.72, 1 - ao * 0.08)})`;
+      fr.style.opacity = ao > 2 ? '0' : '1';
+      fr.style.zIndex = String(50 - ao);
+      fr.style.pointerEvents = ao > 2 ? 'none' : 'auto';
+      fr.classList.toggle('is-active', o === 0);
+    });
+    counter.textContent = `${active + 1} / ${items.length}`;
   }
 
-  slider.querySelector('.vault-prev').addEventListener('click', () => show(i - 1));
-  slider.querySelector('.vault-next').addEventListener('click', () => show(i + 1));
-  show(0);
+  root.querySelector('.vault-prev').addEventListener('click', () => {
+    active = (active - 1 + items.length) % items.length; update();
+  });
+  root.querySelector('.vault-next').addEventListener('click', () => {
+    active = (active + 1) % items.length; update();
+  });
+  update();
 }
 
 renderVault();
