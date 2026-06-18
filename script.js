@@ -146,7 +146,7 @@ document.addEventListener('click', (event) => {
 }, true);
 
 // ---- active section tracking ----
-const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations'].map((id) => document.getElementById(id));
+const sections = ['home', 'canvas', 'grid', 'builder', 'lab', 'gallery', 'creations', 'vault'].map((id) => document.getElementById(id));
 const links = document.querySelectorAll('.nav-link');
 const obs = new IntersectionObserver(
   (entries) => {
@@ -1828,3 +1828,86 @@ document.addEventListener('click', (event) => {
 document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape') closeVerifyModal();
 });
+
+// ---- Grid Theory Digital Vault: artworks held by the treasury wallet ----
+const VAULT_WALLET = '0xc76b4bc9bf5044846733ba77d479db40bf341977';
+
+function ipfsToHttp(u) {
+  if (!u) return '';
+  if (u.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + u.slice(7).replace(/^ipfs\//, '');
+  return u;
+}
+function vaultImage(it) {
+  return ipfsToHttp(it.image_url || it.media_url || it.metadata?.image || it.metadata?.image_url || '');
+}
+
+async function loadVault() {
+  const slider = document.getElementById('vault-slider');
+  if (!slider) return;
+  try {
+    const res = await fetch(
+      `https://eth.blockscout.com/api/v2/addresses/${VAULT_WALLET}/nft?type=ERC-721%2CERC-1155`
+    );
+    const data = await res.json();
+    const items = (data.items || [])
+      .map((it) => ({
+        img: vaultImage(it),
+        name: it.metadata?.name || (it.token?.name ? `${it.token.name} #${it.id}` : `#${it.id}`),
+        collection: it.token?.name || 'Unknown collection',
+        tokenId: it.id,
+        contract: it.token?.address_hash
+      }))
+      .filter((x) => x.img);
+    renderVault(slider, items);
+  } catch (e) {
+    slider.innerHTML = '<div class="vault-empty">The vault is resting — please try again shortly.</div>';
+  }
+}
+
+function renderVault(slider, items) {
+  if (!items.length) {
+    slider.innerHTML = '<div class="vault-empty">No artworks in the vault yet.</div>';
+    return;
+  }
+  slider.innerHTML =
+    '<div class="vault-stage">' +
+      '<button class="vault-nav vault-prev" type="button" aria-label="Previous artwork">‹</button>' +
+      '<img class="vault-img" alt="" />' +
+      '<button class="vault-nav vault-next" type="button" aria-label="Next artwork">›</button>' +
+    '</div>' +
+    '<div class="vault-meta">' +
+      '<strong class="vault-name"></strong>' +
+      '<span class="vault-collection"></span>' +
+      '<a class="vault-link" target="_blank" rel="noreferrer">View on OpenSea ↗</a>' +
+    '</div>' +
+    '<div class="vault-counter"></div>';
+
+  const img = slider.querySelector('.vault-img');
+  const nameEl = slider.querySelector('.vault-name');
+  const colEl = slider.querySelector('.vault-collection');
+  const linkEl = slider.querySelector('.vault-link');
+  const counter = slider.querySelector('.vault-counter');
+  let i = 0;
+
+  function show(n) {
+    i = (n + items.length) % items.length;
+    const it = items[i];
+    img.src = it.img;
+    img.alt = it.name;
+    nameEl.textContent = it.name;
+    colEl.textContent = it.collection;
+    if (it.contract) {
+      linkEl.style.display = '';
+      linkEl.href = `https://opensea.io/assets/ethereum/${it.contract}/${it.tokenId}`;
+    } else {
+      linkEl.style.display = 'none';
+    }
+    counter.textContent = `${i + 1} / ${items.length}`;
+  }
+
+  slider.querySelector('.vault-prev').addEventListener('click', () => show(i - 1));
+  slider.querySelector('.vault-next').addEventListener('click', () => show(i + 1));
+  show(0);
+}
+
+loadVault();
