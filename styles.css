@@ -273,12 +273,61 @@ body::before {
   line-height: 1.55;
   color: rgba(255, 255, 255, 0.76);
 }
+/* caption below the frame — used on mobile (hidden on desktop, where the
+   info sits as an overlay inside the frame) */
+.vault-caption { display: none; }
+
 .vault-controls {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 20px;
   margin-top: 14px;
+}
+
+/* Mobile: the 3D coverflow is too cramped — show a single full-width image
+   with the description below it instead. */
+@media (max-width: 720px) {
+  .vault-coverflow {
+    height: auto;
+    perspective: none;
+    margin: 18px 0 0;
+  }
+  .vault-track {
+    position: static;
+    transform-style: flat;
+  }
+  .vault-frame {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    transform: none !important;
+    filter: none !important;
+    opacity: 1 !important;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+  .vault-frame:not(.is-active) { display: none; }
+  .vault-frame-info { display: none; }
+  .vault-caption {
+    display: block;
+    margin: 16px 2px 2px;
+  }
+  .vault-caption strong {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin-bottom: 8px;
+  }
+  .vault-caption p {
+    margin: 0;
+    font-size: 12px;
+    line-height: 1.65;
+    color: var(--muted);
+  }
 }
 .vault-nav {
   width: 42px;

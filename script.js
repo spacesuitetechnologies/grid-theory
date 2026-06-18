@@ -1863,6 +1863,7 @@ function renderVault() {
 
   root.innerHTML =
     '<div class="vault-coverflow"><div class="vault-track"></div></div>' +
+    '<div class="vault-caption"><strong></strong><p></p></div>' +
     '<div class="vault-controls">' +
       '<button class="vault-nav vault-prev" type="button" aria-label="Previous project">‹</button>' +
       '<span class="vault-counter"></span>' +
@@ -1871,6 +1872,8 @@ function renderVault() {
 
   const track = root.querySelector('.vault-track');
   const counter = root.querySelector('.vault-counter');
+  const capName = root.querySelector('.vault-caption strong');
+  const capDesc = root.querySelector('.vault-caption p');
   let active = 0;
 
   const frames = items.map((it, idx) => {
@@ -1908,6 +1911,9 @@ function renderVault() {
       fr.classList.toggle('is-active', o === 0);
     });
     counter.textContent = `${active + 1} / ${items.length}`;
+    // caption below the frame (shown on mobile, where the overlay is hidden)
+    capName.textContent = items[active].name;
+    capDesc.textContent = items[active].desc;
   }
 
   root.querySelector('.vault-prev').addEventListener('click', () => {
