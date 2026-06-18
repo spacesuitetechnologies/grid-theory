@@ -224,7 +224,7 @@ body::before {
   overflow: hidden;
   box-shadow: 0 28px 80px rgba(0, 0, 0, 0.6);
   cursor: pointer;
-  filter: brightness(0.5) saturate(0.85);
+  filter: brightness(0.45) saturate(0.85) blur(3.5px);
   transition: transform .6s cubic-bezier(.22, .7, .2, 1), opacity .6s, filter .6s, box-shadow .6s, border-color .6s;
   will-change: transform, opacity;
 }
