@@ -1354,7 +1354,8 @@ main,
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24px calc(var(--frame-inset) + 26px) calc(var(--frame-inset) + 22px);
+  /* extra bottom space so footer text clears the fixed corner social buttons */
+  padding: 24px calc(var(--frame-inset) + 26px) calc(var(--frame-inset) + 66px);
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.08em;
