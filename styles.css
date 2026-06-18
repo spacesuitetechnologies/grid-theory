@@ -1361,6 +1361,47 @@ main,
   color: var(--faint);
   text-transform: uppercase;
 }
+.foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+.foot-links a {
+  color: var(--faint);
+  text-decoration: none;
+  transition: color .25s;
+}
+.foot-links a:hover { color: var(--accent); }
+.foot-copy { white-space: nowrap; }
+
+/* legal / content pages (terms, privacy, contact) */
+.legal-page { max-width: 840px; }
+.legal {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.75;
+}
+.legal-updated {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 22px;
+}
+.legal h3 {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 30px 0 8px;
+}
+.legal p { margin: 0 0 12px; }
+.legal ul { margin: 0 0 14px; padding-left: 18px; }
+.legal li { margin-bottom: 6px; }
+.legal a { color: var(--accent); text-decoration: none; }
+.legal a:hover { text-decoration: underline; }
 
 /* social corner */
 .social {
