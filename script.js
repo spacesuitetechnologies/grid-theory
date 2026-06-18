@@ -1835,22 +1835,22 @@ const VAULT_PROJECTS = [
   {
     img: 'assets/vault/state-of-the-art.avif',
     name: 'STATE OF THE ART',
-    desc: 'Texture-rich abstract compositions that blur digital and analog — contemporary painting reimagined fully on-chain.'
-  },
-  {
-    img: 'assets/vault/bonsai.jpg',
-    name: 'On-Chain Bonsai',
-    desc: 'Living generative bonsai, drawn and stored entirely from smart-contract code — no servers, no IPFS, just the chain.'
+    desc: 'STATE OF THE ART is the first large-scale hybrid collection by ThankYouX. The project reimagines blockchain technology as a medium rather than a tool for distribution. Four large-scale paintings are each broken into 400 tiles — creating 1,600 unique digital artworks, each paired with its physical counterpart. Upon mint, participants randomly receive a single digital tile corresponding to a section of one of the four paintings.'
   },
   {
     img: 'assets/vault/npc.avif',
     name: 'Non Playable Character',
-    desc: 'Minimalist pixel units that give identity to the overlooked background characters of games and culture.'
+    desc: 'A collection of characters who were never meant to lead the story — until now. Inspired by internet culture, gaming, and the everyday crowd, NPC celebrates the background characters, the lurkers, the spectators, and the misunderstood. Each NFT is a unique personality within a larger digital society — proof that even the side characters have a story worth telling.'
+  },
+  {
+    img: 'assets/vault/bonsai.jpg',
+    name: 'On-Chain Bonsai',
+    desc: 'On-Chain Bonsai is a collection of 3,200 fully on-chain animated bonsai trees living in sync with Ethereum itself. Each bonsai experiences time through the blockchain: every 6,900 blocks, one month passes in its life — roughly a single day in ours. There are no buttons to press, no watering cans to fill, no shortcuts to growth. You cannot prune it, nurture it, or accelerate its journey. The bonsai grows on its own terms, guided only by time and the chain. Ownership is not about control — it is about observation.'
   },
   {
     img: 'assets/vault/gloobs.avif',
     name: 'The Gloobs',
-    desc: 'A playful cast of collectible creatures — soft, characterful, and impossible not to like.'
+    desc: 'The Gloobs are weird little creatures that escaped from a forgotten sketchbook and quietly scattered across Ethereum. Nobody knows where they came from. Nobody knows why they appeared. Some are harmless. Some are chaotic. Some should probably stay sealed. Each gloob is different — each one carries its own weird little energy. This is the first official record of their existence.'
   }
 ];
 

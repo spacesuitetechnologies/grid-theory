@@ -245,27 +245,33 @@ body::before {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 30px 18px 16px;
-  background: linear-gradient(transparent, rgba(6, 6, 8, 0.6) 35%, rgba(6, 6, 8, 0.94));
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
+  max-height: 70%;
+  overflow-y: auto;
+  padding: 40px 16px 16px;
+  background: linear-gradient(transparent, rgba(6, 6, 8, 0.7) 28%, rgba(6, 6, 8, 0.96));
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   opacity: 0;
   transform: translateY(10px);
   transition: opacity .4s .12s, transform .4s .12s;
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
 }
+.vault-frame-info::-webkit-scrollbar { width: 4px; }
+.vault-frame-info::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); }
 .vault-frame.is-active .vault-frame-info { opacity: 1; transform: none; }
 .vault-frame-info strong {
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 }
 .vault-frame-info p {
   margin: 0;
-  font-size: 11.5px;
-  line-height: 1.6;
-  color: rgba(255, 255, 255, 0.74);
+  font-size: 11px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.76);
 }
 .vault-controls {
   display: flex;
