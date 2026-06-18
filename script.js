@@ -1832,13 +1832,32 @@ document.addEventListener('keydown', (event) => {
 // ---- Grid Theory Digital Vault: artworks held by the treasury wallet ----
 const VAULT_WALLET = '0xc76b4bc9bf5044846733ba77d479db40bf341977';
 
-function ipfsToHttp(u) {
-  if (!u) return '';
-  if (u.startsWith('ipfs://')) return 'https://ipfs.io/ipfs/' + u.slice(7).replace(/^ipfs\//, '');
-  return u;
+const IPFS_GATEWAYS = [
+  'https://ipfs.io/ipfs/',
+  'https://dweb.link/ipfs/',
+  'https://nftstorage.link/ipfs/',
+  'https://w3s.link/ipfs/'
+];
+
+// extract an ipfs CID+path from an ipfs:// URI or a /ipfs/ gateway URL
+function ipfsPath(it) {
+  const sources = [it.media_url, it.image_url, it.metadata?.image, it.metadata?.image_url];
+  for (const s of sources) {
+    if (!s) continue;
+    if (s.startsWith('ipfs://')) return s.slice(7).replace(/^ipfs\//, '');
+    const idx = s.indexOf('/ipfs/');
+    if (idx >= 0) return s.slice(idx + 6);
+  }
+  return null;
 }
-function vaultImage(it) {
-  return ipfsToHttp(it.image_url || it.media_url || it.metadata?.image || it.metadata?.image_url || '');
+
+// Ordered list of image URLs to try (data URIs/http first, then IPFS gateways).
+function imageCandidates(it) {
+  const direct = it.image_url || it.media_url || it.metadata?.image || it.metadata?.image_url || '';
+  if (direct.startsWith('data:')) return [direct];
+  const path = ipfsPath(it);
+  if (path) return IPFS_GATEWAYS.map((g) => g + path);
+  return direct ? [direct] : [];
 }
 
 async function loadVault() {
@@ -1851,13 +1870,13 @@ async function loadVault() {
     const data = await res.json();
     const items = (data.items || [])
       .map((it) => ({
-        img: vaultImage(it),
+        candidates: imageCandidates(it),
         name: it.metadata?.name || (it.token?.name ? `${it.token.name} #${it.id}` : `#${it.id}`),
         collection: it.token?.name || 'Unknown collection',
         tokenId: it.id,
         contract: it.token?.address_hash
       }))
-      .filter((x) => x.img);
+      .filter((x) => x.candidates.length);
     renderVault(slider, items);
   } catch (e) {
     slider.innerHTML = '<div class="vault-empty">The vault is resting — please try again shortly.</div>';
@@ -1889,10 +1908,27 @@ function renderVault(slider, items) {
   const counter = slider.querySelector('.vault-counter');
   let i = 0;
 
+  let hopTimer;
   function show(n) {
     i = (n + items.length) % items.length;
     const it = items[i];
-    img.src = it.img;
+    // try each candidate URL in turn; fall back to the next gateway on error
+    // OR if a gateway hangs (no load within the timeout)
+    let ci = 0;
+    clearTimeout(hopTimer);
+    const tryLoad = () => {
+      clearTimeout(hopTimer);
+      img.src = it.candidates[ci];
+      hopTimer = setTimeout(() => {
+        if (!img.naturalWidth && ci < it.candidates.length - 1) { ci += 1; tryLoad(); }
+      }, 3000);
+    };
+    img.onload = () => clearTimeout(hopTimer);
+    img.onerror = () => {
+      clearTimeout(hopTimer);
+      if (ci < it.candidates.length - 1) { ci += 1; tryLoad(); }
+    };
+    tryLoad();
     img.alt = it.name;
     nameEl.textContent = it.name;
     colEl.textContent = it.collection;
