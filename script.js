@@ -1490,6 +1490,20 @@ const GALLERY_STYLES = [
     img: 'assets/sample/brush-stroke.png'
   },
   {
+    name: 'History',
+    cells: 4,
+    palette: ['#09040f', '#2a1743', '#65305d', '#b9783a', '#f0b56a'],
+    mode: 'blocks',
+    img: 'assets/sample/History.PNG'
+  },
+  {
+    name: 'The beginning',
+    cells: 3,
+    palette: ['#050505', '#242424', '#555555', '#9a9a9a', '#e6e2d7'],
+    mode: 'radial',
+    img: 'assets/sample/The%20Beginning.JPG'
+  },
+  {
     name: 'Heat trace',
     cells: 6,
     palette: ['#100606', '#9b2f22', '#c98534', '#f2aa35', '#fff0c7'],

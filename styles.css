@@ -440,11 +440,13 @@ body::before {
   position: relative;
   border: 1px solid var(--line);
   border-radius: 3px;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 1;
   overflow: hidden;
   background: #000000;
 }
 #field { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.canvas-stage { display: flex; align-items: center; justify-content: center; }
+.canvas-video { width: 70%; height: 70%; display: block; object-fit: contain; }
 .canvas-readout {
   position: absolute;
   bottom: 14px; left: 16px;
