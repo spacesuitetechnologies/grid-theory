@@ -1651,7 +1651,7 @@ if (grid) {
   // Fixed seed so the tiles are static and identical on every load.
   const baseSeed = 424242;
   // Shade Traits: image-based shades only, in this explicit order.
-  const order = ['Gradient', 'Pastel', 'Wave', 'Dark', '1/1', 'Brush stroke'];
+  const order = ['Gradient', 'Pastel', 'Wave', 'Dark', '1/1', 'Brush stroke', 'History', 'The beginning'];
   const traitStyles = order
     .map((n) => GALLERY_STYLES.find((s) => s.name === n))
     .filter(Boolean);
